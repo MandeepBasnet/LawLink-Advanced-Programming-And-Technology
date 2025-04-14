@@ -2,27 +2,34 @@
 CREATE DATABASE IF NOT EXISTS LawLink;
 USE LawLink;
 
--- Create Users table for authentication
-CREATE TABLE IF NOT EXISTS Users (
-                                     user_id INT AUTO_INCREMENT PRIMARY KEY,
-                                     username VARCHAR(50) NOT NULL UNIQUE,
+-- Create Admins table
+CREATE TABLE IF NOT EXISTS Admins (
+                                      admin_id INT AUTO_INCREMENT PRIMARY KEY,
+                                      username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    full_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    last_login TIMESTAMP NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    profile_image VARCHAR(255)
+    );
+
+-- Create Lawyers table
+CREATE TABLE IF NOT EXISTS Lawyers (
+                                       lawyer_id INT AUTO_INCREMENT PRIMARY KEY,
+                                       admin_id INT,
+                                       username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     full_name VARCHAR(100) NOT NULL,
     phone VARCHAR(20),
     address TEXT,
-    role ENUM('ADMIN', 'LAWYER', 'CLIENT') NOT NULL,
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP NULL,
     is_active BOOLEAN DEFAULT TRUE,
-    profile_image VARCHAR(255)     -- Changed to store file path instead of BLOB
-    );
-
--- Create Lawyers table with professional details
-CREATE TABLE IF NOT EXISTS Lawyers (
-                                       lawyer_id INT AUTO_INCREMENT PRIMARY KEY,
-                                       user_id INT NOT NULL,
-                                       specialization VARCHAR(100) NOT NULL,
+    profile_image VARCHAR(255),
+    specialization VARCHAR(100) NOT NULL,
     practice_areas TEXT NOT NULL,
     experience_years INT NOT NULL,
     education TEXT NOT NULL,
@@ -32,19 +39,37 @@ CREATE TABLE IF NOT EXISTS Lawyers (
     is_verified BOOLEAN DEFAULT FALSE,
     is_available BOOLEAN DEFAULT TRUE,
     rating DECIMAL(3, 2) DEFAULT 0.0,
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+    FOREIGN KEY (admin_id) REFERENCES Admins(admin_id)
     );
 
--- Create Clients table with additional client information
+-- Create Clients table
 CREATE TABLE IF NOT EXISTS Clients (
                                        client_id INT AUTO_INCREMENT PRIMARY KEY,
-                                       user_id INT NOT NULL,
-                                       date_of_birth DATE,
-                                       gender ENUM('MALE', 'FEMALE', 'OTHER'),
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+                                       username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    full_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    address TEXT,
+    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    profile_image VARCHAR(255),
+    date_of_birth DATE,
+    gender ENUM('MALE', 'FEMALE', 'OTHER')
     );
 
--- Rest of the tables remain the same
+-- Create LawyerAvailability table to track days when a lawyer is NOT available
+-- By default, lawyers are available every day of the week
+CREATE TABLE IF NOT EXISTS LawyerAvailability (
+                                                  lawyer_id INT NOT NULL,
+                                                  day_of_week ENUM('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY') NOT NULL,
+    is_available BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (lawyer_id, day_of_week),
+    FOREIGN KEY (lawyer_id) REFERENCES Lawyers(lawyer_id) ON DELETE CASCADE
+    );
+
+-- Create Appointments table
 CREATE TABLE IF NOT EXISTS Appointments (
                                             appointment_id INT AUTO_INCREMENT PRIMARY KEY,
                                             lawyer_id INT NOT NULL,
@@ -57,7 +82,9 @@ CREATE TABLE IF NOT EXISTS Appointments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (lawyer_id) REFERENCES Lawyers(lawyer_id) ON DELETE CASCADE,
-    FOREIGN KEY (client_id) REFERENCES Clients(client_id) ON DELETE CASCADE
+    FOREIGN KEY (client_id) REFERENCES Clients(client_id) ON DELETE CASCADE,
+    -- Add a unique constraint to prevent double booking
+    UNIQUE KEY unique_appointment (lawyer_id, appointment_date, appointment_time)
     );
 
 -- Create Reviews table
@@ -68,17 +95,6 @@ CREATE TABLE IF NOT EXISTS Reviews (
     comment TEXT,
     review_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (appointment_id) REFERENCES Appointments(appointment_id) ON DELETE CASCADE
-    );
-
--- Create LawyerAvailability table
-CREATE TABLE IF NOT EXISTS LawyerAvailability (
-                                                  availability_id INT AUTO_INCREMENT PRIMARY KEY,
-                                                  lawyer_id INT NOT NULL,
-                                                  day_of_week ENUM('MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY') NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-    FOREIGN KEY (lawyer_id) REFERENCES Lawyers(lawyer_id) ON DELETE CASCADE,
-    UNIQUE KEY unique_lawyer_day (lawyer_id, day_of_week)
     );
 
 -- Create PracticeAreas table for standardized practice areas
@@ -97,9 +113,9 @@ CREATE TABLE IF NOT EXISTS LawyerPracticeAreas (
     FOREIGN KEY (area_id) REFERENCES PracticeAreas(area_id) ON DELETE CASCADE
     );
 
--- Insert default admin user
-INSERT INTO Users (username, password, email, full_name, role)
-VALUES ('admin', 'admin123', 'admin@lawlink.com', 'System Administrator', 'ADMIN');
+-- Insert default admin
+INSERT INTO Admins (username, password, email, full_name)
+VALUES ('admin', 'admin123', 'admin@lawlink.com', 'System Administrator');
 
 -- Insert practice areas
 INSERT INTO PracticeAreas (area_name, description) VALUES
@@ -109,3 +125,22 @@ INSERT INTO PracticeAreas (area_name, description) VALUES
                                                        ('Corporate Law', 'Legal services for businesses, corporations, and commercial entities'),
                                                        ('Labor Law', 'Legal matters related to employment, workplace rights, and regulations'),
                                                        ('International Law', 'Legal issues crossing international boundaries and jurisdictions');
+
+-- Trigger to create default availability for new lawyers
+DELIMITER //
+CREATE TRIGGER after_lawyer_insert
+    AFTER INSERT ON Lawyers
+    FOR EACH ROW
+BEGIN
+    -- Insert default availability for all days of the week (all available by default)
+    INSERT INTO LawyerAvailability (lawyer_id, day_of_week, is_available)
+    VALUES
+        (NEW.lawyer_id, 'MONDAY', TRUE),
+        (NEW.lawyer_id, 'TUESDAY', TRUE),
+        (NEW.lawyer_id, 'WEDNESDAY', TRUE),
+        (NEW.lawyer_id, 'THURSDAY', TRUE),
+        (NEW.lawyer_id, 'FRIDAY', TRUE),
+        (NEW.lawyer_id, 'SATURDAY', TRUE),
+        (NEW.lawyer_id, 'SUNDAY', TRUE);
+END //
+DELIMITER ;
