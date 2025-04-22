@@ -1,22 +1,18 @@
 package model;
 
 /**
- * Represents a lawyer's availability for a specific day of the week.
- * By default, lawyers are available every day of the week.
- * This class is used to track days when a lawyer is NOT available.
+ * LawyerAvailability class that represents a lawyer's availability on a specific day of the week
  */
 public class LawyerAvailability {
     private int lawyerId;
-    private String dayOfWeek; // MONDAY, TUESDAY, etc.
+    private String dayOfWeek;
     private boolean isAvailable;
 
     // Default constructor
     public LawyerAvailability() {
-        // By default, lawyers are available
-        this.isAvailable = true;
     }
 
-    // Constructor with all fields
+    // Constructor with essential fields
     public LawyerAvailability(int lawyerId, String dayOfWeek, boolean isAvailable) {
         this.lawyerId = lawyerId;
         this.dayOfWeek = dayOfWeek;

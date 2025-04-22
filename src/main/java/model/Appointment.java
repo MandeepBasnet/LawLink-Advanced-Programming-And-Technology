@@ -1,11 +1,12 @@
 package model;
 
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 
 /**
- * Represents an appointment between a lawyer and a client.
+ * Appointment class that represents an appointment between a lawyer and a client
  */
 public class Appointment {
     private int appointmentId;
@@ -13,15 +14,16 @@ public class Appointment {
     private int clientId;
     private Date appointmentDate;
     private Time appointmentTime;
-    private int duration; // in minutes
-    private String status; // PENDING, CONFIRMED, COMPLETED, CANCELLED
+    private int duration;
+    private String status;
     private String notes;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
-    // Additional fields for convenience
-    private Lawyer lawyer;
-    private Client client;
+    // Additional fields for display purposes
+    private String lawyerName;
+    private String clientName;
+    private BigDecimal consultationFee;
 
     // Default constructor
     public Appointment() {
@@ -35,22 +37,6 @@ public class Appointment {
         this.appointmentTime = appointmentTime;
         this.duration = duration;
         this.status = "PENDING";
-    }
-
-    // Full constructor
-    public Appointment(int appointmentId, int lawyerId, int clientId, Date appointmentDate,
-                       Time appointmentTime, int duration, String status, String notes,
-                       Timestamp createdAt, Timestamp updatedAt) {
-        this.appointmentId = appointmentId;
-        this.lawyerId = lawyerId;
-        this.clientId = clientId;
-        this.appointmentDate = appointmentDate;
-        this.appointmentTime = appointmentTime;
-        this.duration = duration;
-        this.status = status;
-        this.notes = notes;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
     // Getters and Setters
@@ -134,20 +120,28 @@ public class Appointment {
         this.updatedAt = updatedAt;
     }
 
-    public Lawyer getLawyer() {
-        return lawyer;
+    public String getLawyerName() {
+        return lawyerName;
     }
 
-    public void setLawyer(Lawyer lawyer) {
-        this.lawyer = lawyer;
+    public void setLawyerName(String lawyerName) {
+        this.lawyerName = lawyerName;
     }
 
-    public Client getClient() {
-        return client;
+    public String getClientName() {
+        return clientName;
     }
 
-    public void setClient(Client client) {
-        this.client = client;
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
+    }
+
+    public BigDecimal getConsultationFee() {
+        return consultationFee;
+    }
+
+    public void setConsultationFee(BigDecimal consultationFee) {
+        this.consultationFee = consultationFee;
     }
 
     @Override
