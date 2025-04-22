@@ -1,150 +1,109 @@
 package util;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
+
 import jakarta.servlet.http.Part;
 
 /**
- * Utility class for file storage operations.
- * Handles storing and retrieving files from local storage or CDN.
+ * Utility class for handling file storage operations
  */
 public class FileStorageUtil {
-    private static final String CDN_BASE_URL = "https://cdn.lawlink.com/";
-    private static final String LOCAL_STORAGE_PATH = "uploads/";
-    private static final boolean USE_CDN = false; // Set to true to use CDN, false for local storage
+
+    private static final String UPLOAD_DIR = "uploads";
+    private static final String PROFILE_DIR = "profiles";
 
     /**
-     * Gets the URL for a file, either from CDN or local storage.
-     *
-     * @param path The relative path of the file
-     * @return The full URL to the file
-     */
-    public static String getCdnUrl(String path) {
-        if (path == null || path.isEmpty()) {
-            return "";
-        }
-
-        if (USE_CDN) {
-            return CDN_BASE_URL + path;
-        } else {
-            // For local storage, return the application-relative path
-            return path;
-        }
-    }
-
-    /**
-     * Stores a file from an uploaded Part.
-     *
+     * Save a profile image to the file system
      * @param part The uploaded file part
-     * @param subDirectory The subdirectory to store the file in (e.g., "profiles")
-     * @return The relative path to the stored file
+     * @param userId The ID of the user
+     * @return The relative path to the saved file
      * @throws IOException If an I/O error occurs
      */
-    public static String storeFile(Part part, String subDirectory) throws IOException {
-        String fileName = getSubmittedFileName(part);
-        String fileExtension = "";
+    public static String saveProfileImage(Part part, int userId) throws IOException {
+        // Get the base directory for file uploads
+        String baseDir = getBaseUploadDirectory();
 
-        if (fileName != null && !fileName.isEmpty()) {
-            int lastDot = fileName.lastIndexOf('.');
-            if (lastDot > 0) {
-                fileExtension = fileName.substring(lastDot);
-            }
-        }
+        // Create the profile directory if it doesn't exist
+        String profileDir = baseDir + File.separator + PROFILE_DIR;
+        createDirectoryIfNotExists(profileDir);
 
-        // Generate a unique file name
-        String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
-        String relativePath = LOCAL_STORAGE_PATH + subDirectory + "/" + uniqueFileName;
-        String absolutePath = getAbsolutePath(relativePath);
+        // Generate a unique filename
+        String fileName = userId + "_" + UUID.randomUUID().toString() + getFileExtension(part);
 
-        // Ensure directory exists
-        File directory = new File(absolutePath).getParentFile();
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
+        // Save the file
+        Path filePath = Paths.get(profileDir + File.separator + fileName);
+        Files.copy(part.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Write the file
-        try (InputStream input = part.getInputStream();
-             FileOutputStream output = new FileOutputStream(absolutePath)) {
-
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = input.read(buffer)) > 0) {
-                output.write(buffer, 0, length);
-            }
-        }
-
-        return relativePath;
+        // Return the relative path
+        return UPLOAD_DIR + "/" + PROFILE_DIR + "/" + fileName;
     }
 
     /**
-     * Gets the absolute path for a relative path.
-     *
-     * @param relativePath The relative path
-     * @return The absolute path
-     */
-    public static String getAbsolutePath(String relativePath) {
-        // This would typically use ServletContext.getRealPath() in a servlet
-        // For simplicity, we're using a hardcoded approach here
-        String basePath = System.getProperty("catalina.base") + "/webapps/LawLink/";
-        return basePath + relativePath;
-    }
-
-    /**
-     * Gets the submitted file name from a Part.
-     *
-     * @param part The uploaded file part
-     * @return The original file name
-     */
-    private static String getSubmittedFileName(Part part) {
-        String contentDisp = part.getHeader("content-disposition");
-        String[] items = contentDisp.split(";");
-
-        for (String item : items) {
-            if (item.trim().startsWith("filename")) {
-                return item.substring(item.indexOf('=') + 2, item.length() - 1);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Checks if a file exists.
-     *
+     * Delete a profile image from the file system
      * @param relativePath The relative path to the file
-     * @return true if the file exists, false otherwise
+     * @return true if the file was deleted, false otherwise
      */
-    public static boolean fileExists(String relativePath) {
-        if (USE_CDN) {
-            // For CDN, we assume the file exists
-            return true;
-        } else {
-            String absolutePath = getAbsolutePath(relativePath);
-            return Files.exists(Paths.get(absolutePath));
+    public static boolean deleteProfileImage(String relativePath) {
+        if (relativePath == null || relativePath.isEmpty()) {
+            return false;
+        }
+
+        // Get the base directory for file uploads
+        String baseDir = getBaseUploadDirectory();
+
+        // Get the absolute path to the file
+        Path filePath = Paths.get(baseDir + File.separator + relativePath.replace("/", File.separator));
+
+        try {
+            return Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 
     /**
-     * Gets the default profile image path for a user type.
-     *
-     * @param userType The type of user (admin, lawyer, client)
-     * @return The path to the default profile image
+     * Get the base upload directory
+     * @return The base upload directory
      */
-    public static String getDefaultProfileImage(String userType) {
-        switch (userType.toLowerCase()) {
-            case "admin":
-                return "assets/images/default-admin.png";
-            case "lawyer":
-                return "assets/images/default-lawyer.png";
-            case "client":
-                return "assets/images/default-client.png";
-            default:
-                return "assets/images/default-avatar.jpg";
+    private static String getBaseUploadDirectory() {
+        // Get the catalina base directory
+        String catalinaBase = System.getProperty("catalina.base");
+        if (catalinaBase == null) {
+            catalinaBase = System.getProperty("user.dir");
         }
+
+        // Create the upload directory if it doesn't exist
+        String uploadDir = catalinaBase + File.separator + "webapps" + File.separator + UPLOAD_DIR;
+        createDirectoryIfNotExists(uploadDir);
+
+        return uploadDir;
+    }
+
+    /**
+     * Create a directory if it doesn't exist
+     * @param dirPath The directory path
+     */
+    private static void createDirectoryIfNotExists(String dirPath) {
+        File dir = new File(dirPath);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+    }
+
+    /**
+     * Get the file extension from a Part
+     * @param part The uploaded file part
+     * @return The file extension
+     */
+    private static String getFileExtension(Part part) {
+        String submittedFileName = part.getSubmittedFileName();
+        return submittedFileName.substring(submittedFileName.lastIndexOf("."));
     }
 }
