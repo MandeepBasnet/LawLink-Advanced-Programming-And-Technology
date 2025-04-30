@@ -2,7 +2,6 @@ package controller;
 
 import dao.UserDAO;
 import model.User;
-import util.PasswordUtil;
 import util.ValidationUtil;
 
 import jakarta.servlet.ServletException;
@@ -10,7 +9,6 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.UUID;
 
 
 /**
@@ -57,8 +55,8 @@ public class RegisterServlet extends HttpServlet {
                 return;
             }
 
-            String hashedPassword = PasswordUtil.hashPassword(password);
-            User newUser = new User(username, hashedPassword, email, fullName, "CLIENT");
+//            String hashedPassword = PasswordUtil.hashPassword(password);
+            User newUser = new User(username, password, email, fullName, "CLIENT");
             boolean success = userDAO.registerUser(newUser);
 
             if (success) {

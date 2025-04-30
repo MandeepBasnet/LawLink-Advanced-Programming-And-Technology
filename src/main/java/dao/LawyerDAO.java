@@ -147,35 +147,6 @@ public class LawyerDAO {
         }
     }
 
-    /**
-     * Get top lawyers based on rating
-     * @param limit Maximum number of lawyers to return
-     * @return List of Lawyer objects
-     */
-    public List<Lawyer> getTopLawyers(int limit) {
-        String sql = "SELECT u.*, l.* FROM Users u " +
-                "JOIN Lawyers l ON u.user_id = l.lawyer_id " +
-                "WHERE l.is_verified = TRUE AND l.is_available = TRUE " +
-                "ORDER BY l.rating DESC LIMIT ?";
-        List<Lawyer> lawyers = new ArrayList<>();
-
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, limit);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    lawyers.add(mapResultSetToLawyer(rs));
-                }
-            }
-
-            return lawyers;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return lawyers;
-        }
-    }
 
     /**
      * Get lawyers by practice area

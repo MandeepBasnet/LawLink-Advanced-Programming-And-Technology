@@ -47,6 +47,9 @@ public class LoginServlet extends HttpServlet {
             UserDAO userDAO = new UserDAO();
             User user = userDAO.getUserByEmail(email);
 
+            System.out.println(password);
+            System.out.println(user.getFullName());
+            System.out.println(PasswordUtil.verifyPassword("password", user.getPassword()));
             if (user != null && PasswordUtil.verifyPassword(password, user.getPassword())) {
                 HttpSession session = request.getSession(true);
                 session.setAttribute("user", user);
