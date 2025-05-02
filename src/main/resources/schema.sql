@@ -268,3 +268,6 @@ WHERE RAND() < 0.5; -- Randomly assign practice areas to lawyers
 
 UPDATE users
 SET password = '$2a$10$/n4cAJAuieAlz95eM1myw.ZEBilpGXVivrDmDWTTHhbllgj7pYwre';
+
+-- Check if gender column exists, if not add it
+ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(10);

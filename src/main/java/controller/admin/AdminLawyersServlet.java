@@ -31,7 +31,7 @@ public class AdminLawyersServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         List<Lawyer> lawyers = lawyerDAO.getAllLawyers();
         request.setAttribute("lawyers", lawyers);
-        request.getRequestDispatcher("adminLawyers.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/admin/adminDashboardLawyers.jsp").forward(request, response);
     }
 }
 

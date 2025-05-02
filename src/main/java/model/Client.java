@@ -7,7 +7,7 @@ import java.sql.Date;
  */
 public class Client extends User {
     private int clientId;
-    private Date dateOfBirth;
+    private Date dateOfBirthSql; // SQL Date type for database operations
     private String gender;
 
     // Default constructor
@@ -23,10 +23,14 @@ public class Client extends User {
 
     // Constructor with all fields
     public Client(String username, String password, String email, String fullName,
-                  Date dateOfBirth, String gender) {
+                  Date dateOfBirthSql, String gender) {
         super(username, password, email, fullName, "CLIENT");
-        this.dateOfBirth = dateOfBirth;
+        this.dateOfBirthSql = dateOfBirthSql;
         this.gender = gender;
+        // Also set the string version for the parent class
+        if (dateOfBirthSql != null) {
+            this.setDateOfBirth(dateOfBirthSql.toString());
+        }
     }
 
     // Getters and Setters
@@ -38,19 +42,23 @@ public class Client extends User {
         this.clientId = clientId;
     }
 
-    public Date getDateOfBirth() {
-        return dateOfBirth;
+    // SQL Date version for database operations
+    public Date getDateOfBirthSql() {
+        return dateOfBirthSql;
     }
 
-    public void setDateOfBirth(Date dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
+    public void setDateOfBirthSql(Date dateOfBirthSql) {
+        this.dateOfBirthSql = dateOfBirthSql;
+        // Also set the string version for the parent class
+        if (dateOfBirthSql != null) {
+            this.setDateOfBirth(dateOfBirthSql.toString());
+        }
     }
 
-    public String getGender() {
-        return gender;
-    }
-
+    // Override to maintain compatibility with parent class
+    @Override
     public void setGender(String gender) {
+        super.setGender(gender);
         this.gender = gender;
     }
 
@@ -60,7 +68,7 @@ public class Client extends User {
                 "clientId=" + clientId +
                 ", userId=" + getUserId() +
                 ", fullName='" + getFullName() + '\'' +
-                ", dateOfBirth=" + dateOfBirth +
+                ", dateOfBirth=" + dateOfBirthSql +
                 ", gender='" + gender + '\'' +
                 '}';
     }

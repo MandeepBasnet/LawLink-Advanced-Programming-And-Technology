@@ -19,7 +19,7 @@ public class AdminAppointmentsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         List<Appointment> appointments = appointmentDAO.getAllAppointments();
         request.setAttribute("appointments", appointments);
-        request.getRequestDispatcher("adminAppointments.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/admin/adminAppointments.jsp").forward(request, response);
     }
 }
 

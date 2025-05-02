@@ -41,4 +41,19 @@
         <location>/WEB-INF/views/error/500.jsp</location>
     </error-page>
 
+    <error-page>
+        <exception-type>java.sql.SQLException</exception-type>
+        <location>/WEB-INF/views/error/database-error.jsp</location>
+    </error-page>
+
+    <!-- Client Profile Servlet Mapping -->
+    <servlet>
+        <servlet-name>ClientProfileServlet</servlet-name>
+        <servlet-class>controller.client.ClientProfileServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ClientProfileServlet</servlet-name>
+        <url-pattern>/client/my-profile</url-pattern>
+    </servlet-mapping>
+
 </web-app>

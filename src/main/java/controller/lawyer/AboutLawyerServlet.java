@@ -39,7 +39,7 @@ public class AboutLawyerServlet extends HttpServlet {
 
         Lawyer lawyer = lawyerDAO.getLawyerById(user.getUserId());
         request.setAttribute("lawyer", lawyer);
-        request.getRequestDispatcher("/WEB-INF/views/lawyer/about-lawyer.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/lawyer/aboutLawyer.jsp").forward(request, response);
     }
 
     @Override

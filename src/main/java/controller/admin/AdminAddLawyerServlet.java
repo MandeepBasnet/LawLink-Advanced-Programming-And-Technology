@@ -90,7 +90,7 @@ public class AdminAddLawyerServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.getRequestDispatcher("/WEB-INF/views/admin/admin-add-lawyer.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/views/admin/adminAddLawyers.jsp").forward(request, response);
     }
 }
 

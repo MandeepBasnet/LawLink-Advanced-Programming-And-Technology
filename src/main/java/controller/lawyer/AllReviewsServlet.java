@@ -19,10 +19,10 @@ public class AllReviewsServlet extends HttpServlet {
         try {
             List<Review> reviews = reviewDAO.getRecentReviews(100); // Show up to 100 recent reviews
             request.setAttribute("reviews", reviews);
-            request.getRequestDispatcher("allReviews.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/lawyer/allReviews.jsp").forward(request, response);
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("error.jsp");
+            request.getRequestDispatcher("/WEB-INF/views/error/error.jsp").forward(request, response);
         }
     }
 }

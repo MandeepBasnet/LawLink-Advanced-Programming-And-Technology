@@ -367,6 +367,8 @@ public class LawyerDAO {
         lawyer.setSessionExpiry(rs.getTimestamp("session_expiry"));
         lawyer.setResetToken(rs.getString("reset_token"));
         lawyer.setResetTokenExpiry(rs.getTimestamp("reset_token_expiry"));
+        lawyer.setOtp(rs.getString("otp"));
+        lawyer.setOtpExpiry(rs.getTimestamp("otp_expiry"));
 
         // Map Lawyer fields
         lawyer.setLawyerId(rs.getInt("lawyer_id"));

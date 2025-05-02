@@ -63,8 +63,8 @@ public class ClientDAO {
             stmt = conn.prepareStatement(sql);
             stmt.setInt(1, client.getUserId());
 
-            if (client.getDateOfBirth() != null) {
-                stmt.setDate(2, client.getDateOfBirth());
+            if (client.getDateOfBirthSql() != null) {
+                stmt.setDate(2, client.getDateOfBirthSql());
             } else {
                 stmt.setNull(2, Types.DATE);
             }
@@ -205,8 +205,8 @@ public class ClientDAO {
 
             stmt = conn.prepareStatement(sql);
 
-            if (client.getDateOfBirth() != null) {
-                stmt.setDate(1, client.getDateOfBirth());
+            if (client.getDateOfBirthSql() != null) {
+                stmt.setDate(1, client.getDateOfBirthSql());
             } else {
                 stmt.setNull(1, Types.DATE);
             }
@@ -287,7 +287,12 @@ public class ClientDAO {
 
         // Map Client fields
         client.setClientId(rs.getInt("client_id"));
-        client.setDateOfBirth(rs.getDate("date_of_birth"));
+        
+        // Use the SQL Date version for the client-specific field
+        java.sql.Date dob = rs.getDate("date_of_birth");
+        client.setDateOfBirthSql(dob);
+        // The setDateOfBirthSql method will also set the string version in the parent class
+        
         client.setGender(rs.getString("gender"));
 
         return client;

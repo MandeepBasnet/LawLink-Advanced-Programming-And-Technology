@@ -38,7 +38,6 @@ public class UserDAO {
             pstmt.setString(5, user.getPhone());
             pstmt.setString(6, user.getAddress());
             pstmt.setString(7, user.getRole());
-            pstmt.setBoolean(8, user.isActive());
             
             int affectedRows = pstmt.executeUpdate();
             
@@ -105,7 +104,6 @@ public class UserDAO {
                     user.setPhone(rs.getString("phone"));
                     user.setAddress(rs.getString("address"));
                     user.setRole(rs.getString("role"));
-                    user.setActive(rs.getBoolean("is_active"));
                     return user;
                 }
             }
@@ -194,38 +192,28 @@ public class UserDAO {
      * Update a user in the database
      * @param user User object to update
      * @return true if successful, false otherwise
+     * @throws SQLException if a database error occurs
      */
-    public boolean updateUser(User user) {
-        String sql = "UPDATE Users SET username = ?, password = ?, email = ?, " +
-                "full_name = ?, phone = ?, address = ?, role = ?, is_active = ?, " +
-                "profile_image = ?, session_token = ?, session_expiry = ?, " +
-                "reset_token = ?, reset_token_expiry = ?, otp = ?, otp_expiry = ? WHERE user_id = ?";
-
+    public boolean updateUser(User user) throws SQLException {
+        String sql = "UPDATE users SET username = ?, email = ?, full_name = ?, " +
+                    "phone = ?, address = ?, gender = ? WHERE user_id = ?";
+                    
         try (Connection conn = DBConnectionUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+            
             stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getPassword());
-            stmt.setString(3, user.getEmail());
-            stmt.setString(4, user.getFullName());
-            stmt.setString(5, user.getPhone());
-            stmt.setString(6, user.getAddress());
-            stmt.setString(7, user.getRole());
-            stmt.setBoolean(8, user.isActive());
-            stmt.setString(9, user.getProfileImage());
-            stmt.setString(10, user.getSessionToken());
-            stmt.setTimestamp(11, user.getSessionExpiry());
-            stmt.setString(12, user.getResetToken());
-            stmt.setTimestamp(13, user.getResetTokenExpiry());
-            stmt.setString(14, user.getOtp());
-            stmt.setTimestamp(15, user.getOtpExpiry());
-            stmt.setInt(16, user.getUserId());
-
+            stmt.setString(2, user.getEmail());
+            stmt.setString(3, user.getFullName());
+            stmt.setString(4, user.getPhone());
+            stmt.setString(5, user.getAddress());
+            stmt.setString(6, user.getGender());
+            stmt.setInt(7, user.getUserId());
+            
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
+            LOGGER.log(Level.SEVERE, "Error updating user: " + e.getMessage(), e);
+            throw e;
         }
     }
 
@@ -316,7 +304,6 @@ public class UserDAO {
         user.setPhone(rs.getString("phone"));
         user.setAddress(rs.getString("address"));
         user.setRole(rs.getString("role"));
-        user.setActive(rs.getBoolean("is_active"));
         return user;
     }
 
@@ -384,7 +371,6 @@ public class UserDAO {
                 client.setPhone(rs.getString("phone"));
                 client.setAddress(rs.getString("address"));
                 client.setProfileImage(rs.getString("profile_image"));
-                client.setCreatedAt(rs.getTimestamp("created_at"));
                 clients.add(client);
             }
         } catch (SQLException e) {
@@ -404,6 +390,25 @@ public class UserDAO {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        }
+    }
+
+    // Helper method to check if a column exists in a table
+    private boolean checkIfColumnExists(Connection conn, String tableName, String columnName) throws SQLException {
+        ResultSet rs = null;
+        try {
+            // Get database metadata
+            DatabaseMetaData meta = conn.getMetaData();
+            rs = meta.getColumns(null, null, tableName, columnName);
+            return rs.next(); // If rs.next() returns true, the column exists
+        } finally {
+            if (rs != null) {
+                try {
+                    rs.close();
+                } catch (SQLException e) {
+                    LOGGER.warning("Error closing result set: " + e.getMessage());
+                }
+            }
         }
     }
 }

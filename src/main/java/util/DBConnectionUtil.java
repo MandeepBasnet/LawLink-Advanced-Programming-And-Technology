@@ -43,7 +43,14 @@ public class DBConnectionUtil {
             // Debug log (remove or replace with logger in production)
             System.out.println("Connecting to DB: " + url);
 
-            return DriverManager.getConnection(url, username, password);
+            // Set connection timeout to avoid hanging
+            Properties connectionProps = new Properties();
+            connectionProps.setProperty("user", username);
+            connectionProps.setProperty("password", password);
+            connectionProps.setProperty("connectTimeout", "5000");
+            connectionProps.setProperty("socketTimeout", "5000");
+
+            return DriverManager.getConnection(url, connectionProps);
         } catch (ClassNotFoundException e) {
             throw new SQLException("Database driver not found", e);
         } catch (SQLException e) {

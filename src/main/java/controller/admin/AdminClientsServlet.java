@@ -32,11 +32,11 @@ public class AdminClientsServlet extends HttpServlet {
         try {
             List<User> clients = userDAO.getAllClients();
             request.setAttribute("clients", clients);
-            request.getRequestDispatcher("adminClients.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/admin/adminDashboardClients.jsp").forward(request, response);
         } catch (SQLException e) {
             logger.severe("Error retrieving clients: " + e.getMessage());
             request.setAttribute("error", "Error retrieving clients. Please try again.");
-            request.getRequestDispatcher("adminClients.jsp").forward(request, response);
+            request.getRequestDispatcher("/WEB-INF/views/admin/adminDashboardClients.jsp").forward(request, response);
         }
     }
 }
