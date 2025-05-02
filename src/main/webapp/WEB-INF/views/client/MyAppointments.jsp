@@ -52,44 +52,49 @@
       text-decoration: none;
     }
 
-    .profile-container {
+    .profile {
       position: relative;
+      display: inline-block;
     }
 
-    .profile-img {
+    .profile img {
       width: 40px;
       height: 40px;
       border-radius: 50%;
       cursor: pointer;
     }
 
-    .dropdown-icon {
-      margin-left: 5px;
-    }
-
-    .dropdown-menu {
+    .profile-menu {
+      display: none;
       position: absolute;
       right: 0;
-      top: 60px;
-      background-color: #e0e0e0;
-      width: 200px;
-      border-radius: 5px;
-      overflow: hidden;
+      background-color: white;
+      color: black;
+      min-width: 150px;
+      box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+      border-radius: 8px;
+      z-index: 99;
     }
 
-    .dropdown-item {
-      padding: 15px;
-      text-align: center;
+    .profile-menu a, .profile-menu form button {
+      padding: 10px;
+      text-align: left;
+      text-decoration: none;
+      display: block;
+      background: none;
+      border: none;
+      color: black;
+      width: 100%;
+      font-size: 14px;
       cursor: pointer;
     }
 
-    .dropdown-item:hover {
-      background-color: #d0d0d0;
+    .profile-menu a:hover, .profile-menu form button:hover {
+      background-color: #f1f1f1;
     }
 
-    .dropdown-item.active {
-      background-color: #c0c0c0;
-      font-weight: bold;
+    .profile:hover .profile-menu {
+      display: block;
     }
 
     .container {
@@ -176,6 +181,22 @@
     }
   </style>
 </head>
+<script>
+  const profileImg = document.querySelector('.profile-img');
+  const dropdownMenu = document.querySelector('.dropdown-menu');
+
+  profileImg.addEventListener('click', () => {
+    dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+  });
+
+  // Optional: Hide dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!document.querySelector('.profile-container').contains(e.target)) {
+      dropdownMenu.style.display = 'none';
+    }
+  });
+</script>
+
 <body>
 <!-- Navigation Bar -->
 <div class="navbar">
@@ -192,16 +213,17 @@
     <a href="${pageContext.request.contextPath}/contact-us">Contact Us</a>
   </div>
 
-  <div class="profile-container">
-    <img src="${pageContext.request.contextPath}/assets/images/upload_area.png" alt="Profile" class="profile-img">
-    <span class="dropdown-icon">▼</span>
-
-    <div class="dropdown-menu">
-      <a href="${pageContext.request.contextPath}/client/my-profile"><div class="dropdown-item">My Profile</div></a>
-      <a href="${pageContext.request.contextPath}/client/my-appointments"><div class="dropdown-item active">My Appointments</div></a>
-      <a href="${pageContext.request.contextPath}/logout"><div class="dropdown-item">Logout</div></a>
+  <div class="profile">
+    <img src="${pageContext.request.contextPath}/assets/images/profile_pic.png" alt="John Thapa" class="profile-pic">
+    <div class="profile-menu">
+      <a href="${pageContext.request.contextPath}/client/my-appointments">My Appointments</a>
+      <a href="${pageContext.request.contextPath}/client/my-profile">My Profile</a>
+      <form action="${pageContext.request.contextPath}/logout" method="post" style="margin:0;">
+        <button type="submit">Logout</button>
+      </form>
     </div>
   </div>
+
 </div>
 
 <!-- Main Content -->

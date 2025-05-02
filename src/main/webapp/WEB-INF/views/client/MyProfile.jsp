@@ -103,39 +103,49 @@
       margin-bottom: 40px;
     }
 
-    .profile-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    .profile {
+      position: relative;
+      display: inline-block;
     }
 
-    .profile-images {
-      display: flex;
-      gap: 20px;
-      margin-bottom: 20px;
+    .profile img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
     }
 
-    .user-img {
-      width: 150px;
-      height: 150px;
-      object-fit: cover;
-      border-radius: 5px;
+    .profile-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      background-color: white;
+      color: black;
+      min-width: 150px;
+      box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+      border-radius: 8px;
+      z-index: 99;
     }
 
-    .default-avatar {
-      width: 150px;
-      height: 150px;
-      background-color: #e8eeff;
-      border-radius: 5px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    .profile-menu a, .profile-menu form button {
+      padding: 10px;
+      text-align: left;
+      text-decoration: none;
+      display: block;
+      background: none;
+      border: none;
+      color: black;
+      width: 100%;
+      font-size: 14px;
+      cursor: pointer;
     }
 
-    .avatar-icon {
-      width: 80px;
-      height: 80px;
-      color: white;
+    .profile-menu a:hover, .profile-menu form button:hover {
+      background-color: #f1f1f1;
+    }
+
+    .profile:hover .profile-menu {
+      display: block;
     }
 
     .user-name {
@@ -220,14 +230,14 @@
     <a href="${pageContext.request.contextPath}/contact-us">Contact Us</a>
   </div>
 
-  <div class="profile-container">
-    <img src="${pageContext.request.contextPath}/assets/images/upload_area.png" alt="Profile" class="profile-img">
-    <span class="dropdown-icon">▼</span>
-
-    <div class="dropdown-menu">
-      <a href="${pageContext.request.contextPath}/client/my-profile"><div class="dropdown-item">My Profile</div></a>
-      <a href="${pageContext.request.contextPath}/client/my-appointments"><div class="dropdown-item active">My Appointments</div></a>
-      <a href="${pageContext.request.contextPath}/logout"><div class="dropdown-item">Logout</div></a>
+  <div class="profile">
+    <img src="${pageContext.request.contextPath}/assets/images/profile_pic.png" alt="John Thapa" class="profile-pic">
+    <div class="profile-menu">
+      <a href="${pageContext.request.contextPath}/client/my-appointments">My Appointments</a>
+      <a href="${pageContext.request.contextPath}/client/my-profile">My Profile</a>
+      <form action="${pageContext.request.contextPath}/logout" method="post" style="margin:0;">
+        <button type="submit">Logout</button>
+      </form>
     </div>
   </div>
 </div>
@@ -235,17 +245,6 @@
 <!-- Main Content -->
 <div class="container">
   <h1>My Profile</h1>
-
-  <div class="profile-content">
-    <div class="profile-images">
-      <img src="${pageContext.request.contextPath}/assets/images/john.png" alt="John Thapa" class="user-img">
-      <div class="default-avatar">
-        <svg class="avatar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="#c9d1f5"/>
-          <path d="M12 14C7.58172 14 4 17.5817 4 22H20C20 17.5817 16.4183 14 12 14Z" fill="#c9d1f5"/>
-        </svg>
-      </div>
-    </div>
 
     <div class="user-name">${user.fullName}</div>
 
