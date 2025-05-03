@@ -14,14 +14,12 @@ import java.util.logging.Logger;
 
 @WebFilter("/*")
 public class RememberMeFilter implements Filter {
-
     private static final Logger LOGGER = Logger.getLogger(RememberMeFilter.class.getName());
     private UserDAO userDAO;
     private boolean daoInitialized = false;
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        // Defer DAO initialization to first request to avoid startup failures
         LOGGER.info("RememberMeFilter initialized");
     }
 
@@ -33,7 +31,6 @@ public class RememberMeFilter implements Filter {
                 LOGGER.info("UserDAO successfully initialized");
             } catch (SQLException e) {
                 LOGGER.log(Level.SEVERE, "Failed to initialize UserDAO. Remember Me functionality will be disabled.", e);
-                // Don't throw exception - let the filter continue without remember me functionality
             }
         }
     }
@@ -41,36 +38,31 @@ public class RememberMeFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-
-        // Initialize DAO on first request
         if (!daoInitialized) {
             initializeDAO();
         }
 
-        // Only proceed with remember me logic if DAO was successfully initialized
         if (daoInitialized) {
             HttpServletRequest req = (HttpServletRequest) request;
             HttpSession session = req.getSession(false);
 
-            if (session == null || session.getAttribute("currentUser") == null) {
+            if (session == null || session.getAttribute("user") == null) {
                 try {
                     String token = CookieUtil.getCookieValue(req, CookieUtil.REMEMBER_ME_COOKIE);
                     if (token != null) {
                         User user = userDAO.getUserBySessionToken(token);
                         if (user != null && user.isActive()) {
                             HttpSession newSession = req.getSession(true);
-                            newSession.setAttribute("currentUser", user);
+                            newSession.setAttribute("user", user);
                             LOGGER.info("User auto-logged in via remember me token: " + user.getEmail());
                         }
                     }
                 } catch (Exception e) {
-                    // Log error but don't block the request
                     LOGGER.log(Level.SEVERE, "Error processing remember me token", e);
                 }
             }
         }
 
-        // Always continue the filter chain
         chain.doFilter(request, response);
     }
 

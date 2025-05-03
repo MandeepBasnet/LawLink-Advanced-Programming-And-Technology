@@ -19,10 +19,10 @@ public class BookAppointmentServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        User currentUser = (session != null) ? (User) session.getAttribute("currentUser") : null;
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
 
-        if (currentUser == null || !"CLIENT".equals(currentUser.getRole())) {
-            response.sendRedirect("login.jsp");
+        if (user == null || !"CLIENT".equals(user.getRole())) {
+            response.sendRedirect(request.getContextPath() + "/log-in");
             return;
         }
 
@@ -35,7 +35,7 @@ public class BookAppointmentServlet extends HttpServlet {
 
             Appointment appointment = new Appointment();
             appointment.setLawyerId(lawyerId);
-            appointment.setClientId(currentUser.getUserId());
+            appointment.setClientId(user.getUserId());
             appointment.setAppointmentDate(date);
             appointment.setAppointmentTime(time);
             appointment.setDuration(duration);
