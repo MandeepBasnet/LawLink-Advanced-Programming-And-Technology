@@ -24,6 +24,7 @@ public class Appointment {
     private String lawyerName;
     private String clientName;
     private BigDecimal consultationFee;
+    private Lawyer lawyer;
 
     // Default constructor
     public Appointment() {
@@ -142,6 +143,14 @@ public class Appointment {
 
     public void setConsultationFee(BigDecimal consultationFee) {
         this.consultationFee = consultationFee;
+    }
+
+    public Lawyer getLawyer() {
+        return lawyer;
+    }
+
+    public void setLawyer(Lawyer lawyer) {
+        this.lawyer = lawyer;
     }
 
     @Override
