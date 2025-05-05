@@ -1,10 +1,11 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard Lawyers - LawLink</title>
+    <title>LawLink | Admin Lawyers</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/adminStyle.css">
 </head>
 <body>
@@ -15,28 +16,27 @@
         <jsp:param name="activePage" value="lawyers" />
     </jsp:include>
 
-    <div class="main-content">
+    <main class="main-content">
         <div class="dashboard-stats">
             <div class="stat-card">
-                <img src="${pageContext.request.contextPath}/assets/images/clients_icon.svg" alt="Clients" class="stat-icon">
-                <div class="stat-number">12</div>
-                <div class="stat-label">Clients</div>
+                <img src="${pageContext.request.contextPath}/assets/images/clients_icon.svg" alt="Clients Icon" class="stat-icon">
+                <h3 class="stat-number"><c:out value="${clientCount}" default="0" /></h3>
+                <p class="stat-label">Clients</p>
             </div>
             <div class="stat-card">
-                <img src="${pageContext.request.contextPath}/assets/images/lawyer_icon.png" alt="Lawyers" class="stat-icon">
-                <div class="stat-number">15</div>
-                <div class="stat-label">Lawyers</div>
+                <img src="${pageContext.request.contextPath}/assets/images/lawyer_icon.png" alt="Lawyers Icon" class="stat-icon">
+                <h3 class="stat-number"><c:out value="${lawyerCount}" default="0" /></h3>
+                <p class="stat-label">Lawyers</p>
             </div>
             <div class="stat-card">
-                <img src="${pageContext.request.contextPath}/assets/images/appointments_icon.svg" alt="Appointments" class="stat-icon">
-                <div class="stat-number">12</div>
-                <div class="stat-label">Appointments</div>
+                <img src="${pageContext.request.contextPath}/assets/images/appointments_icon.svg" alt="Appointments Icon" class="stat-icon">
+                <h3 class="stat-number"><c:out value="${appointmentCount}" default="0" /></h3>
+                <p class="stat-label">Appointments</p>
             </div>
         </div>
 
-        <div class="lawyers-section">
-            <h2 class="section-title">Lawyers</h2>
-
+        <div class="lawyers">
+            <h2 class="section-title">All Lawyers</h2>
             <table class="lawyers-table">
                 <thead>
                 <tr>
@@ -49,32 +49,28 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>
-                        <img src="${pageContext.request.contextPath}/assets/images/susasa-acharaya.png" alt="Susasa Acharya" class="lawyer-avatar">
-                        Susasa Acharya
-                    </td>
-                    <td>Property Law</td>
-                    <td>Biratnagar</td>
-                    <td>susasa@lawlink.com</td>
-                    <td>9703129041</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>
-                        <img src="${pageContext.request.contextPath}/assets/images/anish-basnet.png" alt="Anish Basnet" class="lawyer-avatar">
-                        Anish Basnet
-                    </td>
-                    <td>Labour Law</td>
-                    <td>Jhapa</td>
-                    <td>anish@lawlink.com</td>
-                    <td>9705203041</td>
-                </tr>
+                <c:forEach items="${lawyers}" var="lawyer" varStatus="loop">
+                    <tr>
+                        <td><c:out value="${loop.count}" /></td>
+                        <td>
+                            <img src="${pageContext.request.contextPath}/assets/images/<c:out value='${empty lawyer.profileImage ? "default.png" : lawyer.profileImage}' />" alt="<c:out value='${lawyer.fullName}' />" class="lawyer-avatar">
+                            <c:out value="${lawyer.fullName}" />
+                        </td>
+                        <td><c:out value="${lawyer.practiceAreas}" default="${lawyer.specialization}" /></td>
+                        <td><c:out value="${lawyer.address}" default="N/A" /></td>
+                        <td><c:out value="${lawyer.email}" /></td>
+                        <td><c:out value="${lawyer.phone}" default="N/A" /></td>
+                    </tr>
+                </c:forEach>
+                <c:if test="${empty lawyers}">
+                    <tr>
+                        <td colspan="6">No lawyers found.</td>
+                    </tr>
+                </c:if>
                 </tbody>
             </table>
         </div>
-    </div>
+    </main>
 </div>
 </body>
 </html>
