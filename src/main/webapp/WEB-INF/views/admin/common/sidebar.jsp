@@ -14,7 +14,7 @@
     </a>
     <a href="${pageContext.request.contextPath}/admin/admin-lawyers" 
        class="sidebar-item ${param.activePage eq 'lawyers' ? 'active' : ''}">
-        <img src="${pageContext.request.contextPath}/assets/images/clients_icon.svg" alt="Lawyers">
+        <img src="${pageContext.request.contextPath}/assets/images/people_icon.svg" alt="Lawyers">
         Lawyers
     </a>
     <a href="${pageContext.request.contextPath}/admin/admin-add-lawyer" 
