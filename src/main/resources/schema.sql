@@ -1,6 +1,6 @@
 -- Create the LawLink database
-CREATE DATABASE IF NOT EXISTS c5_db;
-USE c5_db;
+CREATE DATABASE IF NOT EXISTS lawlink;
+USE lawlink;
 
 -- Create Users table (base table for all user types)
 CREATE TABLE IF NOT EXISTS Users (
