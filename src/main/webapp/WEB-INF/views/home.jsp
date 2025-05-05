@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ page import="model.User" %>
 <%@ page session="true" %>
 
@@ -26,7 +26,7 @@
             <h1>Innocent until proven guilty.</h1>
             <p>Organize your task through our LawLink.<br>We provide the best services.</p>
             <a href="${pageContext.request.contextPath}/appointment" class="cta-button">Book your appointment</a>
-            <p class="phone-number"><i class="fas fa-phone"></i> or call us at +977-9812345678</p>
+            <p class="phone-number"><i class="fas fa-phone"></i> or call us at ${contactPhone}</p>
         </div>
         <div class="hero-image">
             <img src="${pageContext.request.contextPath}/assets/images/jeniffer.png" alt="Professional Lawyer">
@@ -39,12 +39,9 @@
             <input type="text" name="query" placeholder="Search" class="search-input">
             <select name="practiceArea" class="search-dropdown">
                 <option value="">Practice area</option>
-                <option value="criminal">Criminal Law</option>
-                <option value="labour">Labour Law</option>
-                <option value="international">International Law</option>
-                <option value="property">Property Law</option>
-                <option value="corporate">Corporate Law</option>
-                <option value="family">Family Law</option>
+                <c:forEach var="practiceArea" items="${practiceAreas}">
+                    <option value="${practiceArea.areaName}">${practiceArea.areaName}</option>
+                </c:forEach>
             </select>
             <button type="submit" class="search-button">Search</button>
         </form>
@@ -54,7 +51,7 @@
 <!-- Attorneys Section -->
 <section class="attorneys-section">
     <div class="attorneys-heading">
-        <h2>MEET OUR MOST TALANTED ATTORNEYS</h2>
+        <h2>MEET OUR MOST TALENTED ATTORNEYS</h2>
     </div>
     <div class="attorneys-description">
         <p>Their work involves legal research, courtroom representation, and the protection of both civil and criminal rights. With deep knowledge of the law, they stand as protectors of individual and public rights.</p>
@@ -63,42 +60,59 @@
         <a href="${pageContext.request.contextPath}/appointment" class="book-appointment-btn">Book appointment</a>
     </div>
     <div class="attorney-profiles">
-        <c:forEach var="attorney" items="${attorneys}" varStatus="status">
-            <div class="attorney-card">
-                <img src="${pageContext.request.contextPath}/images/attorneys/${attorney.imageFile}" alt="${attorney.name}">
-                <div class="attorney-info">
-                    <h3>${attorney.name}</h3>
-                    <p>${attorney.description}</p>
-                    <a href="${pageContext.request.contextPath}/book/${attorney.id}" class="book-button">Book now!</a>
+        <c:choose>
+            <c:when test="${not empty attorneys}">
+                <c:forEach var="attorney" items="${attorneys}">
+                    <div class="attorney-card">
+                        <img src="${pageContext.request.contextPath}/assets/images/${attorney.profileImage}" alt="${attorney.fullName}" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                        <div class="attorney-info">
+                            <h3>${attorney.fullName}</h3>
+                            <p>${attorney.aboutMe}</p>
+                            <form action="${pageContext.request.contextPath}/client/book-appointment-page" method="get" style="margin:0;">
+                                <input type="hidden" name="lawyerId" value="${attorney.lawyerId}">
+                                <button type="submit" class="book-button">Book now!</button>
+                            </form>
+                        </div>
+                    </div>
+                </c:forEach>
+            </c:when>
+            <c:otherwise>
+                <!-- Fallback hardcoded attorneys -->
+                <div class="attorney-card">
+                    <img src="${pageContext.request.contextPath}/assets/images/zaina.png" alt="Zaina Rai" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                    <div class="attorney-info">
+                        <h3>Zaina Rai</h3>
+                        <p>She has won 100+ cases till now, one of the most demanding attorneys at your service.</p>
+                        <form action="${pageContext.request.contextPath}/client/book-appointment-page" method="get" style="margin:0;">
+                            <input type="hidden" name="lawyerId" value="1">
+                            <button type="submit" class="book-button">Book now!</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        </c:forEach>
-        <c:if test="${empty attorneys}">
-            <div class="attorney-card">
-                <img src="${pageContext.request.contextPath}/assets/images/zaina-rai.png" alt="Zaina Rai">
-                <div class="attorney-info">
-                    <h3>Zaina Rai</h3>
-                    <p>She has won 100+ cases till now, one of the most demanding attorneys at your service.</p>
-                    <a href="${pageContext.request.contextPath}/book/1" class="book-button">Book now!</a>
+                <div class="attorney-card">
+                    <img src="${pageContext.request.contextPath}/assets/images/rayan.png" alt="Rayan Rajbangsi" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                    <div class="attorney-info">
+                        <h3>Rayan Rajbangsi</h3>
+                        <p>With the experience of 5 years, he has been thriving in our company.</p>
+                        <form action="${pageContext.request.contextPath}/client/book-appointment-page" method="get" style="margin:0;">
+                            <input type="hidden" name="lawyerId" value="2">
+                            <button type="submit" class="book-button">Book now!</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-            <div class="attorney-card">
-                <img src="${pageContext.request.contextPath}/assets/images/rayan-rajbangsi.png" alt="Rayan Rajbangsi">
-                <div class="attorney-info">
-                    <h3>Rayan Rajbangsi</h3>
-                    <p>With the experience of 5 years, he has been thriving in our company.</p>
-                    <a href="${pageContext.request.contextPath}/book/2" class="book-button">Book now!</a>
+                <div class="attorney-card">
+                    <img src="${pageContext.request.contextPath}/assets/images/manish.png" alt="Manish Khanal" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                    <div class="attorney-info">
+                        <h3>Manish Khanal</h3>
+                        <p>Experienced lawyer specializing in Family Law.</p>
+                        <form action="${pageContext.request.contextPath}/client/book-appointment-page" method="get" style="margin:0;">
+                            <input type="hidden" name="lawyerId" value="3">
+                            <button type="submit" class="book-button">Book now!</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-            <div class="attorney-card">
-                <img src="${pageContext.request.contextPath}/assets/images/baviyan-koirala.png" alt="Baviyan Koirala">
-                <div class="attorney-info">
-                    <h3>Baviyan Koirala</h3>
-                    <p>One of our most demanding attorneys, with a 95% success rate.</p>
-                    <a href="${pageContext.request.contextPath}/book/3" class="book-button">Book now!</a>
-                </div>
-            </div>
-        </c:if>
+            </c:otherwise>
+        </c:choose>
     </div>
 </section>
 
@@ -109,7 +123,7 @@
         <c:forEach var="testimonial" items="${testimonials}" varStatus="status">
             <div class="testimonial-card">
                 <div class="testimonial-image">
-                    <img src="${pageContext.request.contextPath}/images/clients/${testimonial.imageFile}" alt="${testimonial.name}">
+                    <img src="${pageContext.request.contextPath}/assets/images/upload_area.png" alt="${testimonial.name}">
                 </div>
                 <div class="testimonial-content">
                     <h3>${testimonial.name}</h3>
@@ -121,7 +135,7 @@
         <c:if test="${empty testimonials}">
             <div class="testimonial-card">
                 <div class="testimonial-image">
-                    <img src="${pageContext.request.contextPath}/images/clients/client1.jpg" alt="Jhon Basnet">
+                    <img src="${pageContext.request.contextPath}/assets/images/john.png" alt="Jhon Basnet">
                 </div>
                 <div class="testimonial-content">
                     <h3>Jhon Basnet</h3>
