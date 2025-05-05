@@ -1,4 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Appointments - LawLink</title>
   <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/clientStyle.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 </head>
 <body>
 <!-- Navigation Bar -->
@@ -39,70 +42,106 @@
 <div class="container">
   <h1>My Appointments</h1>
 
+  <c:if test="${not empty success}">
+    <div class="alert alert-success">${success}</div>
+    <% session.removeAttribute("success"); %>
+  </c:if>
+  <c:if test="${not empty error}">
+    <div class="alert alert-danger">${error}</div>
+    <% session.removeAttribute("error"); %>
+  </c:if>
+
   <div class="appointment-list">
-    <!-- Appointment 1 -->
-    <div class="appointment-card">
-      <img src="${pageContext.request.contextPath}/assets/images/susasa-acharaya.png" alt="Susasa Acharya" class="lawyer-img">
+    <c:choose>
+      <c:when test="${empty appointments}">
+        <p>No appointments found.</p>
+      </c:when>
+      <c:otherwise>
+        <c:forEach var="appointment" items="${appointments}">
+          <div class="appointment-card">
+            <img src="${pageContext.request.contextPath}/assets/images/${appointment.lawyer.profileImage}" alt="${appointment.lawyerName}" class="lawyer-img" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'" />
 
-      <div class="appointment-details">
-        <div class="lawyer-name">Susasa Acharya</div>
-        <div class="lawyer-specialty">Property Law</div>
-        <div class="appointment-info"><strong>Address:</strong> Birtamod</div>
-        <div class="appointment-info"><strong>Date & Time:</strong> 25, July, 2025 | 10:30 AM</div>
-        <div class="appointment-info"><strong>Contact:</strong> 9703129041</div>
-      </div>
+            <div class="appointment-details">
+              <div class="lawyer-name">${appointment.lawyerName}</div>
+              <div class="lawyer-specialty">${appointment.lawyer.specialization}</div>
+              <div class="appointment-info"><strong>Address:</strong> ${appointment.lawyer.address}</div>
+              <div class="appointment-info"><strong>Date & Time:</strong>
+                <fmt:formatDate value="${appointment.appointmentDate}" pattern="dd MMMM, yyyy" /> |
+                <fmt:formatDate value="${appointment.appointmentTime}" pattern="hh:mm a" />
+              </div>
+              <div class="appointment-info"><strong>Contact:</strong> ${appointment.lawyer.phone}</div>
+              <div class="appointment-info"><strong>Status:</strong> ${appointment.status}</div>
+            </div>
 
-      <div class="appointment-actions">
-        <form action="${pageContext.request.contextPath}/cancel-appointment" method="post">
-          <input type="hidden" name="appointmentId" value="1">
-          <button type="submit" class="btn btn-cancel">Cancel appointment</button>
-        </form>
-      </div>
-    </div>
-
-    <!-- Appointment 2 -->
-    <div class="appointment-card">
-      <img src="${pageContext.request.contextPath}/assets/images/anish-basnet.png" alt="Anish Basnet" class="lawyer-img">
-
-      <div class="appointment-details">
-        <div class="lawyer-name">Anish Basnet</div>
-        <div class="lawyer-specialty">Labour Law</div>
-        <div class="appointment-info"><strong>Address:</strong> Jhapa</div>
-        <div class="appointment-info"><strong>Date & Time:</strong> 26, July, 2025 | 3:30 PM</div>
-        <div class="appointment-info"><strong>Contact:</strong> 9705203041</div>
-      </div>
-
-      <div class="appointment-actions">
-        <div class="btn btn-cancelled">Cancelled</div>
-      </div>
-    </div>
-
-    <!-- Appointment 3 -->
-    <div class="appointment-card">
-      <img src="${pageContext.request.contextPath}/assets/images/yusha-shrestha.png" alt="Yusha Shrestha" class="lawyer-img">
-
-      <div class="appointment-details">
-        <div class="lawyer-name">Yusha Shrestha</div>
-        <div class="lawyer-specialty">International Law</div>
-        <div class="appointment-info"><strong>Address:</strong> Tarahara, Itahari</div>
-        <div class="appointment-info"><strong>Date & Time:</strong> 20, April, 2025 | 02 PM</div>
-        <div class="appointment-info"><strong>Contact:</strong> 9709304911</div>
-      </div>
-
-      <div class="appointment-actions">
-        <div class="btn btn-leave_review">Leave Review</div>
-      </div>
-
-      <div class="appointment-actions">
-        <div class="btn btn-completed">
-          <a href="${pageContext.request.contextPath}/client/reviews">Completed</a>
-        </div>
-      </div>
-    </div>
+            <div class="appointment-actions">
+              <c:choose>
+                <c:when test="${appointment.status == 'PENDING' || appointment.status == 'CONFIRMED'}">
+                  <form action="${pageContext.request.contextPath}/client/cancel-appointment" method="post" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
+                    <input type="hidden" name="appointmentId" value="${appointment.appointmentId}">
+                    <button type="submit" class="btn btn-cancel">Cancel Appointment</button>
+                  </form>
+                </c:when>
+                <c:when test="${appointment.status == 'COMPLETED'}">
+                  <form action="${pageContext.request.contextPath}/client/reviews" method="get">
+                    <input type="hidden" name="appointmentId" value="${appointment.appointmentId}">
+                    <button type="submit" class="btn btn-leave_review">Leave Review</button>
+                  </form>
+                  <div class="btn btn-completed">Completed</div>
+                </c:when>
+                <c:when test="${appointment.status == 'CANCELLED'}">
+                  <div class="btn btn-cancelled">Cancelled</div>
+                </c:when>
+              </c:choose>
+            </div>
+          </div>
+        </c:forEach>
+      </c:otherwise>
+    </c:choose>
   </div>
 </div>
+
+<style>
+  .alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+  }
+  .alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+  .alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+  .btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-align: center;
+    display: inline-block;
+  }
+  .btn-cancel {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-cancelled {
+    background-color: #6c757d;
+    color: white;
+  }
+  .btn-completed {
+    background-color: #28a745;
+    color: white;
+  }
+  .btn-leave_review {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+</style>
 </body>
 </html>
-<script>
-  // No JavaScript needed for hover-based dropdown
-</script>

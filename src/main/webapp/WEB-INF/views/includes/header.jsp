@@ -15,14 +15,12 @@
                 <li><a href="${pageContext.request.contextPath}/contact-us">Contact Us</a></li>
                 <c:choose>
                     <c:when test="${empty sessionScope.user}">
-                        <!-- Show these links only when user is NOT logged in -->
                         <li><a href="${pageContext.request.contextPath}/log-in" class="login-btn">Log In</a></li>
                     </c:when>
                     <c:otherwise>
-                        <!-- Show profile dropdown only when user IS logged in -->
                         <li>
                             <div class="profile">
-                                <img src="${pageContext.request.contextPath}/assets/images/<c:out value="${sessionScope.user.getProfileImage()}" default="profile_pic.png" />" alt="Profile" class="profile-img">
+                                <img src="${pageContext.request.contextPath}/<c:out value="${sessionScope.user.getProfileImage()}" default="assets/images/profile_pic.png" />" alt="Profile" class="profile-img">
                                 <div class="profile-menu">
                                     <a href="${pageContext.request.contextPath}/client/my-appointments">My Appointments</a>
                                     <a href="${pageContext.request.contextPath}/client/my-profile">My Profile</a>

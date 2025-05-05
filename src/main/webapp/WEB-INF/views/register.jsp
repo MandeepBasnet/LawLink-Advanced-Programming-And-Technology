@@ -19,7 +19,7 @@
             </a>
             <h1>SIGN UP</h1>
             <p class="subtitle">Enter your Personal details to create your account</p>
-            <form action="${pageContext.request.contextPath}/register" method="post">
+            <form action="${pageContext.request.contextPath}/register" method="post" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="fullName">Full Name</label>
                     <input type="text" id="fullName" name="fullName" required>

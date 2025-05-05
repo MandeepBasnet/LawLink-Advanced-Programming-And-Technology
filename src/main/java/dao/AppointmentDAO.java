@@ -21,6 +21,7 @@ public class AppointmentDAO {
     public boolean createAppointment(Appointment appointment) {
         String sql = "INSERT INTO Appointments (lawyer_id, client_id, appointment_date, appointment_time, " +
                 "duration, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
         try (Connection conn = DBConnectionUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 

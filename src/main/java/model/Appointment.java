@@ -152,6 +152,7 @@ public class Appointment {
     public void setLawyer(Lawyer lawyer) {
         this.lawyer = lawyer;
     }
+
     @Override
     public String toString() {
         return "Appointment{" +

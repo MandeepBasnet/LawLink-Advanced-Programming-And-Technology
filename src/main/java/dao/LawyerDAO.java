@@ -147,6 +147,35 @@ public class LawyerDAO {
         }
     }
 
+    /**
+     * Get the first N lawyers from the database
+     * @param limit Maximum number of lawyers to return
+     * @return List of Lawyer objects
+     */
+    public List<Lawyer> getFirstLawyers(int limit) {
+        String sql = "SELECT u.*, l.* FROM Users u " +
+                "JOIN Lawyers l ON u.user_id = l.lawyer_id " +
+                "WHERE u.is_active = TRUE AND l.is_available = TRUE " +
+                "ORDER BY l.lawyer_id ASC LIMIT ?";
+        List<Lawyer> lawyers = new ArrayList<>();
+
+        try (Connection conn = DBConnectionUtil.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, limit);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    lawyers.add(mapResultSetToLawyer(rs));
+                }
+            }
+
+            return lawyers;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return lawyers;
+        }
+    }
 
     /**
      * Get lawyers by practice area
