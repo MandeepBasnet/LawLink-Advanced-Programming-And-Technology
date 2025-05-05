@@ -83,7 +83,6 @@ public class Review {
     public void setLawyerName(String lawyerName) {
         this.lawyerName = lawyerName;
     }
-
     @Override
     public String toString() {
         return "Review{" +
