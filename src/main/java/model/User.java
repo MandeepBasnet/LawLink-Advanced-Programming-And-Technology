@@ -1,5 +1,4 @@
 package model;
-
 import java.sql.Timestamp;
 import java.io.Serializable;
 
