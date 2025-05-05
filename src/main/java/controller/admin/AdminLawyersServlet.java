@@ -1,5 +1,7 @@
 package controller.admin;
 
+import dao.ClientDAO;
+import dao.AppointmentDAO;
 import dao.LawyerDAO;
 import model.Lawyer;
 import jakarta.servlet.ServletException;
@@ -10,28 +12,29 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.logging.Logger;
 
 @WebServlet("/admin/admin-lawyers")
 public class AdminLawyersServlet extends HttpServlet {
-    private static final Logger logger = Logger.getLogger(AdminLawyersServlet.class.getName());
-    private LawyerDAO lawyerDAO;
-
-    @Override
-    public void init() throws ServletException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
-            lawyerDAO = new LawyerDAO();
+            ClientDAO clientDAO = new ClientDAO();
+            LawyerDAO lawyerDAO = new LawyerDAO();
+            AppointmentDAO appointmentDAO = new AppointmentDAO();
+
+            int clientCount = clientDAO.getAllClients().size();
+            int lawyerCount = lawyerDAO.getAllLawyers().size();
+            int appointmentCount = appointmentDAO.getAllAppointments().size();
+            List<Lawyer> lawyers = lawyerDAO.getAllLawyers();
+
+            request.setAttribute("clientCount", clientCount);
+            request.setAttribute("lawyerCount", lawyerCount);
+            request.setAttribute("appointmentCount", appointmentCount);
+            request.setAttribute("lawyers", lawyers);
+
+            request.getRequestDispatcher("/WEB-INF/views/admin/adminDashboardLawyers.jsp").forward(request, response);
         } catch (SQLException e) {
-            logger.severe("Failed to initialize LawyerDAO: " + e.getMessage());
-            throw new ServletException("Failed to initialize LawyerDAO", e);
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error");
         }
     }
-
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        List<Lawyer> lawyers = lawyerDAO.getAllLawyers();
-        request.setAttribute("lawyers", lawyers);
-        request.getRequestDispatcher("/WEB-INF/views/admin/adminDashboardLawyers.jsp").forward(request, response);
-    }
 }
-
