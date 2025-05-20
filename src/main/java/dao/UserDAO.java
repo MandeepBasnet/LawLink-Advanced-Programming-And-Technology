@@ -2,6 +2,7 @@ package dao;
 
 import model.User;
 import util.DBConnectionUtil;
+import util.ImageUtil;
 import util.FileStorageUtil;
 import util.PasswordUtil;
 import java.sql.*;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.Part;
 
 /**
@@ -65,39 +67,42 @@ public class UserDAO {
      * Register a new user with optional profile image
      * @param user User object to register
      * @param profilePicturePart The uploaded profile picture part
+     * @param servletContext Servlet context for file storage
      * @return true if successful, false otherwise
      */
-    public boolean registerUser(User user, Part profilePicturePart) {
+    public boolean registerUser(User user, Part profilePicturePart, ServletContext servletContext) {
         try {
             String hashedPassword = PasswordUtil.hashPassword(user.getPassword());
             user.setPassword(hashedPassword);
             System.out.println("Hashed password for user: " + user.getUsername());
-            String tempProfileImagePath = null;
+
             if (profilePicturePart != null && profilePicturePart.getSize() > 0) {
                 System.out.println("Profile picture provided, size: " + profilePicturePart.getSize() + " bytes");
-                tempProfileImagePath = FileStorageUtil.saveProfileImage(profilePicturePart, 0);
-                user.setProfileImage(tempProfileImagePath);
-                System.out.println("Temporary profile image saved: " + tempProfileImagePath);
+                String profileImagePath = ImageUtil.resizeAndSaveProfileImage(profilePicturePart, 0, servletContext);
+                user.setProfileImage(profileImagePath);
+                System.out.println("Profile image saved: " + profileImagePath);
             } else {
                 System.out.println("No profile picture provided");
+                user.setProfileImage(null);
             }
+
             boolean success = createUser(user);
             System.out.println("User creation success: " + success);
-            if (success && tempProfileImagePath != null) {
-                String finalProfileImagePath = FileStorageUtil.saveProfileImage(profilePicturePart, user.getUserId());
+
+            if (success && user.getProfileImage() != null) {
+                String finalProfileImagePath = ImageUtil.resizeAndSaveProfileImage(profilePicturePart, user.getUserId(), servletContext);
                 user.setProfileImage(finalProfileImagePath);
                 System.out.println("Final profile image saved: " + finalProfileImagePath);
                 updateUserProfile(user);
                 System.out.println("User profile updated with final image path");
-                FileStorageUtil.deleteProfileImage(tempProfileImagePath);
-                System.out.println("Temporary profile image deleted: " + tempProfileImagePath);
             }
+
             return success;
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to register user: " + e.getMessage(), e);
             if (user.getProfileImage() != null) {
-                FileStorageUtil.deleteProfileImage(user.getProfileImage());
-                System.out.println("Cleaned up temporary profile image: " + user.getProfileImage());
+                FileStorageUtil.deleteProfileImage(user.getProfileImage(), servletContext);
+                System.out.println("Cleaned up profile image: " + user.getProfileImage());
             }
             return false;
         }
@@ -124,7 +129,7 @@ public class UserDAO {
 
             return null;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting user by ID", e);
             return null;
         }
     }
@@ -172,7 +177,7 @@ public class UserDAO {
 
             return null;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting user by email", e);
             return null;
         }
     }
@@ -198,7 +203,7 @@ public class UserDAO {
 
             return null;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting user by session token", e);
             return null;
         }
     }
@@ -221,7 +226,7 @@ public class UserDAO {
 
             return users;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting all users", e);
             return users;
         }
     }
@@ -287,7 +292,7 @@ public class UserDAO {
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error updating last login", e);
             return false;
         }
     }
@@ -312,7 +317,7 @@ public class UserDAO {
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error updating session token", e);
             return false;
         }
     }
@@ -333,7 +338,7 @@ public class UserDAO {
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error deleting user", e);
             return false;
         }
     }
@@ -424,7 +429,7 @@ public class UserDAO {
                 conn.close();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error closing connection", e);
         }
     }
 

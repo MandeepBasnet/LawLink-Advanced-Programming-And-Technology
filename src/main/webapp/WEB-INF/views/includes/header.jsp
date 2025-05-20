@@ -20,7 +20,14 @@
                     <c:otherwise>
                         <li>
                             <div class="profile">
-                                <img src="${pageContext.request.contextPath}/<c:out value="${sessionScope.user.getProfileImage()}" default="assets/images/profile_pic.png" />" alt="Profile" class="profile-img">
+                                <c:choose>
+                                    <c:when test="${not empty sessionScope.user.profileImage}">
+                                        <img src="${pageContext.request.contextPath}/${sessionScope.user.profileImage}" alt="Profile" class="profile-img">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img src="${pageContext.request.contextPath}/assets/images/profile_pic.png" alt="Profile" class="profile-img">
+                                    </c:otherwise>
+                                </c:choose>
                                 <div class="profile-menu">
                                     <a href="${pageContext.request.contextPath}/client/my-appointments">My Appointments</a>
                                     <a href="${pageContext.request.contextPath}/client/my-profile">My Profile</a>

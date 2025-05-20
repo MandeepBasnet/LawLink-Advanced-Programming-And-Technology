@@ -1,5 +1,6 @@
 package util;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.Part;
 
 import javax.imageio.ImageIO;
@@ -14,7 +15,7 @@ public class ImageUtil {
 
     private static final int TARGET_SIZE = 150; // 150x150 pixels for profile images
 
-    public static String resizeAndSaveProfileImage(Part part, int userId) throws IOException {
+    public static String resizeAndSaveProfileImage(Part part, int userId, ServletContext servletContext) throws IOException {
         // Read the image
         BufferedImage originalImage = ImageIO.read(part.getInputStream());
         if (originalImage == null) {
@@ -27,14 +28,12 @@ public class ImageUtil {
         // Convert to input stream
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         String format = part.getContentType().equals("image/jpeg") ? "jpg" : "png";
-        ImageIO.write(resizedImage, format,
-
-                baos);
+        ImageIO.write(resizedImage, format, baos);
         ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
 
         // Create a custom Part wrapper to pass the resized image to FileStorageUtil
         Part resizedPart = new ResizedPart(part, bais, format);
-        return FileStorageUtil.saveProfileImage(resizedPart, userId);
+        return FileStorageUtil.saveProfileImage(resizedPart, userId, servletContext);
     }
 
     private static BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {

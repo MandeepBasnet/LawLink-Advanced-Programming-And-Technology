@@ -110,7 +110,7 @@ public class AdminAddLawyerServlet extends HttpServlet {
             String profileImage = null;
             if (lawyerImagePart != null && lawyerImagePart.getSize() > 0) {
                 try {
-                    profileImage = ImageUtil.resizeAndSaveProfileImage(lawyerImagePart, 0); // Temporary save with userId=0
+                    profileImage = ImageUtil.resizeAndSaveProfileImage(lawyerImagePart, 0, getServletContext()); // Temporary save with userId=0
                 } catch (IOException e) {
                     logger.severe("Failed to process lawyer image: " + e.getMessage());
                     request.setAttribute("error", "Failed to upload lawyer image.");
@@ -147,10 +147,10 @@ public class AdminAddLawyerServlet extends HttpServlet {
 
             if (created && profileImage != null) {
                 // Update profile image with correct userId
-                String finalProfileImage = ImageUtil.resizeAndSaveProfileImage(lawyerImagePart, lawyer.getUserId());
+                String finalProfileImage = ImageUtil.resizeAndSaveProfileImage(lawyerImagePart, lawyer.getUserId(), getServletContext());
                 lawyer.setProfileImage(finalProfileImage);
                 lawyerDAO.updateLawyer(lawyer);
-                FileStorageUtil.deleteProfileImage(profileImage); // Delete temporary image
+                FileStorageUtil.deleteProfileImage(profileImage, getServletContext()); // Delete temporary image
             }
 
             if (created) {
@@ -158,7 +158,7 @@ public class AdminAddLawyerServlet extends HttpServlet {
             } else {
                 request.setAttribute("error", "Failed to add lawyer. Try again.");
                 if (profileImage != null) {
-                    FileStorageUtil.deleteProfileImage(profileImage); // Cleanup on failure
+                    FileStorageUtil.deleteProfileImage(profileImage, getServletContext()); // Cleanup on failure
                 }
             }
 

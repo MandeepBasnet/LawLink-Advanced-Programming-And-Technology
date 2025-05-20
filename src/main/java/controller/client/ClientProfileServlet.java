@@ -13,7 +13,7 @@ import model.User;
 import util.FileStorageUtil;
 import util.ImageUtil;
 import util.SessionUtil;
-import util  .ValidationUtil;
+import util.ValidationUtil;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -159,7 +159,7 @@ public class ClientProfileServlet extends HttpServlet {
                     return;
                 }
                 // Resize and save image
-                newProfileImage = ImageUtil.resizeAndSaveProfileImage(profilePicturePart, user.getUserId());
+                newProfileImage = ImageUtil.resizeAndSaveProfileImage(profilePicturePart, user.getUserId(), getServletContext());
             }
 
             // Update user object
@@ -176,7 +176,7 @@ public class ClientProfileServlet extends HttpServlet {
             if (success) {
                 // Delete old profile image if a new one was uploaded
                 if (profilePicturePart != null && profilePicturePart.getSize() > 0 && oldProfileImage != null) {
-                    FileStorageUtil.deleteProfileImage(oldProfileImage);
+                    FileStorageUtil.deleteProfileImage(oldProfileImage, getServletContext());
                 }
                 // Update session user
                 session.setAttribute("user", user);
@@ -188,7 +188,7 @@ public class ClientProfileServlet extends HttpServlet {
             } else {
                 // Clean up new profile image if update failed
                 if (newProfileImage != null && !newProfileImage.equals(oldProfileImage)) {
-                    FileStorageUtil.deleteProfileImage(newProfileImage);
+                    FileStorageUtil.deleteProfileImage(newProfileImage, getServletContext());
                 }
                 if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
                     sendJsonResponse(response, false, "Failed to update profile.");

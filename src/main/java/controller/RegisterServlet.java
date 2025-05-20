@@ -100,7 +100,7 @@ public class RegisterServlet extends HttpServlet {
             User newUser = new User(username, password, email, fullName, "CLIENT");
 
             // Register user with profile picture
-            boolean success = userDAO.registerUser(newUser, profilePicturePart);
+            boolean success = userDAO.registerUser(newUser, profilePicturePart, getServletContext());
 
             if (success) {
                 LOGGER.info("User registered successfully: " + email);
