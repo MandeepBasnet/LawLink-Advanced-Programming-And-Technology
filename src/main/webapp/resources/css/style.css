@@ -921,6 +921,7 @@ footer {
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
+  color: #000;
 }
 
 .book-appointment-page .appointment-form input {
@@ -1054,19 +1055,24 @@ footer {
 }
 
 .book-appointment-page .lawyer-image {
-  width: 100px;
-  height: 100px;
+  flex: 0 0 40%;
+}
+
+.book-appointment-page .lawyer-image img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
 .book-appointment-page .lawyer-info {
   flex: 1;
+  padding: 15px; /* Added padding for more space */
 }
 
 .book-appointment-page .lawyer-name {
   font-size: 1.5rem;
   font-weight: bold;
-  margin-bottom: 5px;
+  margin-bottom: 8px; /* Increased spacing */
 }
 
 .book-appointment-page .lawyer-title,
@@ -1074,7 +1080,7 @@ footer {
 .book-appointment-page .lawyer-fee {
   font-size: 0.9rem;
   color: #333;
-  margin-bottom: 5px;
+  margin-bottom: 8px; /* Increased spacing */
 }
 
 .book-appointment-page .reviews-section {
@@ -1188,8 +1194,18 @@ footer {
   }
 
   .book-appointment-page .lawyer-image {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
+  }
+
+  .book-appointment-page .lawyer-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .book-appointment-page .lawyer-info {
+    padding: 10px; /* Adjusted padding for responsive design */
   }
 
   nav ul {
