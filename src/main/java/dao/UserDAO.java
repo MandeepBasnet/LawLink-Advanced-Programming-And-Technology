@@ -114,7 +114,7 @@ public class UserDAO {
      * @return User object if found, null otherwise
      */
     public User getUserById(int userId) {
-        String sql = "SELECT u.*, c.date_of_birth FROM Users u LEFT JOIN Clients c ON u.user_id = c.client_id WHERE u.user_id = ?";
+        String sql = "SELECT u.*, u.date_of_birth FROM Users u LEFT JOIN Clients c ON u.user_id = c.client_id WHERE u.user_id = ?";
 
         try (Connection conn = DBConnectionUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -162,7 +162,7 @@ public class UserDAO {
      * @return User object if found, null otherwise
      */
     public User getUserByEmail(String email) {
-        String sql = "SELECT u.*, c.date_of_birth FROM Users u LEFT JOIN Clients c ON u.user_id = c.client_id WHERE u.email = ?";
+        String sql = "SELECT u.*, u.date_of_birth FROM Users u LEFT JOIN Clients c ON u.user_id = c.client_id WHERE u.email = ?";
 
         try (Connection conn = DBConnectionUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -239,7 +239,7 @@ public class UserDAO {
      */
     public boolean updateUser(User user) throws SQLException {
         String sql = "UPDATE users SET username = ?, email = ?, full_name = ?, " +
-                "phone = ?, address = ?, gender = ?, profile_image = ? WHERE user_id = ?";
+                "phone = ?, address = ?, gender = ?, profile_image = ?, date_of_birth = ? WHERE user_id = ?";
 
         try (Connection conn = DBConnectionUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -251,20 +251,19 @@ public class UserDAO {
             stmt.setString(5, user.getAddress());
             stmt.setString(6, user.getGender());
             stmt.setString(7, user.getProfileImage());
-            stmt.setInt(8, user.getUserId());
+            stmt.setString(8, user.getDateOfBirth());
+            stmt.setInt(9, user.getUserId());
 
             int rowsAffected = stmt.executeUpdate();
 
-            // Update date_of_birth in Clients table if user is a client
-            if ("CLIENT".equals(user.getRole()) && user.getDateOfBirth() != null) {
-                String clientSql = "INSERT INTO Clients (client_id, date_of_birth, gender) " +
-                        "VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE date_of_birth = ?, gender = ?";
+            // Update gender in Clients table if user is a client
+            if ("CLIENT".equals(user.getRole())) {
+                String clientSql = "INSERT INTO Clients (client_id, gender) " +
+                        "VALUES (?, ?) ON DUPLICATE KEY UPDATE gender = ?";
                 try (PreparedStatement clientStmt = conn.prepareStatement(clientSql)) {
                     clientStmt.setInt(1, user.getUserId());
-                    clientStmt.setString(2, user.getDateOfBirth());
+                    clientStmt.setString(2, user.getGender());
                     clientStmt.setString(3, user.getGender());
-                    clientStmt.setString(4, user.getDateOfBirth());
-                    clientStmt.setString(5, user.getGender());
                     clientStmt.executeUpdate();
                 }
             }

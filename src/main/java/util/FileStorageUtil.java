@@ -9,7 +9,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 import jakarta.servlet.ServletContext;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;
 
 public class FileStorageUtil {
@@ -40,7 +39,9 @@ public class FileStorageUtil {
             return false;
         }
         String baseDir = getBaseUploadDirectory(servletContext);
-        Path filePath = Paths.get(baseDir, relativePath.replace("/", File.separator));
+        // Remove leading "assets/uploads/" to avoid duplication
+        String cleanPath = relativePath.replaceFirst("^/?assets/uploads/", "");
+        Path filePath = Paths.get(baseDir, cleanPath.replace("/", File.separator));
         System.out.println("Attempting to delete profile image: " + filePath);
         try {
             boolean deleted = Files.deleteIfExists(filePath);

@@ -61,9 +61,12 @@ public class LawyerProfileServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
+        String xhrHeader = request.getHeader("X-Requested-With");
+        LOGGER.info("X-Requested-With header: " + xhrHeader);
+
         if (session == null || SessionUtil.getLoggedInUser(request) == null || !"LAWYER".equals(SessionUtil.getLoggedInUser(request).getRole())) {
             LOGGER.warning("Unauthorized POST attempt: session=" + (session != null ? "exists" : "null"));
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+            if ("XMLHttpRequest".equals(xhrHeader)) {
                 sendJsonResponse(response, false, "User not logged in or not authorized.");
                 return;
             }
@@ -76,7 +79,7 @@ public class LawyerProfileServlet extends HttpServlet {
             Lawyer lawyer = lawyerDAO.getLawyerById(sessionUser.getUserId());
             if (lawyer == null) {
                 LOGGER.warning("Lawyer not found for userId: " + sessionUser.getUserId());
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+                if ("XMLHttpRequest".equals(xhrHeader)) {
                     sendJsonResponse(response, false, "Lawyer not found.");
                     return;
                 }
@@ -126,7 +129,7 @@ public class LawyerProfileServlet extends HttpServlet {
 
             if (errorMessage.length() > 0) {
                 LOGGER.warning("Validation failed: " + errorMessage.toString());
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+                if ("XMLHttpRequest".equals(xhrHeader)) {
                     sendJsonResponse(response, false, errorMessage.toString());
                     return;
                 }
@@ -143,7 +146,7 @@ public class LawyerProfileServlet extends HttpServlet {
                 String contentType = profilePicturePart.getContentType();
                 if (!contentType.equals("image/jpeg") && !contentType.equals("image/png")) {
                     LOGGER.warning("Invalid file type: " + contentType);
-                    if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+                    if ("XMLHttpRequest".equals(xhrHeader)) {
                         sendJsonResponse(response, false, "Only JPEG or PNG images are allowed.");
                         return;
                     }
@@ -176,7 +179,7 @@ public class LawyerProfileServlet extends HttpServlet {
                     }
                     // Update session user
                     session.setAttribute("user", lawyer);
-                    if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+                    if ("XMLHttpRequest".equals(xhrHeader)) {
                         sendJsonResponse(response, true, "Profile updated successfully.", lawyer);
                         return;
                     }
@@ -188,7 +191,7 @@ public class LawyerProfileServlet extends HttpServlet {
                         LOGGER.info("Cleaned up new profile image due to update failure: " + newProfileImage);
                     }
                     LOGGER.warning("Failed to update lawyer profile in database for userId: " + lawyer.getUserId());
-                    if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+                    if ("XMLHttpRequest".equals(xhrHeader)) {
                         sendJsonResponse(response, false, "Failed to update profile in database.");
                         return;
                     }
@@ -201,7 +204,7 @@ public class LawyerProfileServlet extends HttpServlet {
                     FileStorageUtil.deleteProfileImage(newProfileImage, getServletContext());
                     LOGGER.info("Cleaned up new profile image due to database error: " + newProfileImage);
                 }
-                if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+                if ("XMLHttpRequest".equals(xhrHeader)) {
                     sendJsonResponse(response, false, "Database error: " + e.getMessage());
                     return;
                 }
@@ -212,7 +215,7 @@ public class LawyerProfileServlet extends HttpServlet {
             request.getRequestDispatcher("/WEB-INF/views/lawyer/lawyerProfile.jsp").forward(request, response);
         } catch (IOException e) {
             LOGGER.severe("IO error processing profile picture: " + e.getMessage());
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+            if ("XMLHttpRequest".equals(xhrHeader)) {
                 sendJsonResponse(response, false, "Error processing profile picture.");
                 return;
             }
@@ -229,6 +232,7 @@ public class LawyerProfileServlet extends HttpServlet {
     private void sendJsonResponse(HttpServletResponse response, boolean success, String message, Lawyer lawyer) throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
+        response.setStatus(success ? HttpServletResponse.SC_OK : HttpServletResponse.SC_BAD_REQUEST);
         PrintWriter out = response.getWriter();
         JSONObject json = new JSONObject();
         json.put("success", success);

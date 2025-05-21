@@ -1,3 +1,4 @@
+```jsp
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
@@ -24,7 +25,14 @@
             <h1>My Profile</h1>
 
             <!-- Success/Error Messages -->
-            <div id="messageContainer"></div>
+            <div id="messageContainer">
+                <c:if test="${not empty successMessage}">
+                    <div class="success-message"><c:out value="${successMessage}"/></div>
+                </c:if>
+                <c:if test="${not empty errorMessage}">
+                    <div class="error-message"><c:out value="${errorMessage}"/></div>
+                </c:if>
+            </div>
 
             <form id="profileForm" enctype="multipart/form-data">
                 <table width="100%" border="0" cellspacing="0" cellpadding="0">
@@ -299,14 +307,18 @@
             saveBtn.disabled = true;
 
             try {
-                const formData = new FormData(profileForm);
                 const response = await fetch('${pageContext.request.contextPath}/lawyer/lawyer-profile', {
                     method: 'POST',
-                    body: formData,
+                    body: new FormData(profileForm),
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
+
+                // Check if response is OK (status 200-299)
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
 
                 const result = await response.json();
                 console.log('Server response:', result);
@@ -318,13 +330,8 @@
                 messageDiv.textContent = result.message;
                 messageContainer.appendChild(messageDiv);
 
-                viewElements.forEach(el => el.style.display = 'block');
-                editElements.forEach(el => el.style.display = 'none');
-                editBtn.style.display = 'inline-block';
-                saveBtn.style.display = 'none';
-                cancelBtn.style.display = 'none';
-
                 if (result.success) {
+                    // Update displayed values
                     userNameDisplay.textContent = result.lawyer.fullName;
                     genderDisplay.textContent = result.lawyer.gender;
                     emailDisplay.textContent = result.lawyer.email;
@@ -335,10 +342,17 @@
 
                     document.querySelector('header .profile-img').src = profilePicDisplay.src;
 
+                    // Reset form and UI
                     profileForm.reset();
                     profilePictureInput.value = '';
                     imagePreview.style.display = 'none';
+                    viewElements.forEach(el => el.style.display = 'block');
+                    editElements.forEach(el => el.style.display = 'none');
+                    editBtn.style.display = 'inline-block';
+                    saveBtn.style.display = 'none';
+                    cancelBtn.style.display = 'none';
 
+                    // Reload page after a short delay to ensure UI updates
                     setTimeout(() => {
                         window.location.reload();
                     }, 1500);
@@ -349,7 +363,7 @@
                 saveBtn.disabled = false;
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'error-message';
-                messageDiv.textContent = 'An error occurred while saving your profile.';
+                messageDiv.textContent = 'An error occurred while saving your profile. Please try again.';
                 messageContainer.appendChild(messageDiv);
 
                 viewElements.forEach(el => el.style.display = 'block');
@@ -363,3 +377,4 @@
 </script>
 </body>
 </html>
+```
