@@ -26,6 +26,18 @@ public class AdminLawyersServlet extends HttpServlet {
             int appointmentCount = appointmentDAO.getAllAppointments().size();
             List<Lawyer> lawyers = lawyerDAO.getAllLawyers();
 
+            // Transfer session messages to request attributes
+            String successMessage = (String) request.getSession().getAttribute("successMessage");
+            String errorMessage = (String) request.getSession().getAttribute("errorMessage");
+            if (successMessage != null) {
+                request.setAttribute("successMessage", successMessage);
+                request.getSession().removeAttribute("successMessage");
+            }
+            if (errorMessage != null) {
+                request.setAttribute("errorMessage", errorMessage);
+                request.getSession().removeAttribute("errorMessage");
+            }
+
             request.setAttribute("clientCount", clientCount);
             request.setAttribute("lawyerCount", lawyerCount);
             request.setAttribute("appointmentCount", appointmentCount);

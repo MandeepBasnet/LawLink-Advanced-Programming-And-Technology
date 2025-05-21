@@ -17,6 +17,13 @@
     </jsp:include>
 
     <main class="main-content">
+        <c:if test="${not empty successMessage}">
+            <div class="success-message"><c:out value="${successMessage}" /></div>
+        </c:if>
+        <c:if test="${not empty errorMessage}">
+            <div class="error-message"><c:out value="${errorMessage}" /></div>
+        </c:if>
+
         <div class="dashboard-stats">
             <div class="stat-card">
                 <img src="${pageContext.request.contextPath}/assets/images/clients_icon.svg" alt="Clients Icon" class="stat-icon">
@@ -46,6 +53,7 @@
                     <th>Address</th>
                     <th>Email</th>
                     <th>Phone</th>
+                    <th>Action</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -60,11 +68,19 @@
                         <td><c:out value="${lawyer.address}" default="N/A" /></td>
                         <td><c:out value="${lawyer.email}" /></td>
                         <td><c:out value="${lawyer.phone}" default="N/A" /></td>
+                        <td>
+                            <form action="${pageContext.request.contextPath}/admin/delete-lawyer" method="post" onsubmit="return confirm('Are you sure you want to delete this lawyer?');">
+                                <input type="hidden" name="lawyerId" value="${lawyer.lawyerId}">
+                                <button type="submit" class="action-btn" title="Delete Lawyer">
+                                    <img src="${pageContext.request.contextPath}/assets/images/delete_icon.png" alt="Delete Icon" class="action-icon">
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                 </c:forEach>
                 <c:if test="${empty lawyers}">
                     <tr>
-                        <td colspan="6">No lawyers found.</td>
+                        <td colspan="7">No lawyers found.</td>
                     </tr>
                 </c:if>
                 </tbody>
