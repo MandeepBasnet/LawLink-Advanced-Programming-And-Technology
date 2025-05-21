@@ -1,11 +1,11 @@
 package controller;
 
-import dao.AppointmentDAO;
 import dao.LawyerDAO;
 import dao.UserDAO;
 import model.Appointment;
 import model.Lawyer;
 import model.User;
+import dao.AppointmentDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,11 +14,9 @@ import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.*;
+import java.sql.Date;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.google.gson.Gson;
 import util.DBConnectionUtil;
@@ -144,7 +142,7 @@ public class BookAppointmentServlet extends HttpServlet {
             }
 
             // Check LawyerAvailability for the day of the week
-            java.util.Calendar calendar = java.util.Calendar.getInstance();
+            Calendar calendar = Calendar.getInstance();
             calendar.setTime(date);
             String dayOfWeek = new SimpleDateFormat("EEEE").format(date).toUpperCase();
             String availabilitySql = "SELECT is_available FROM LawyerAvailability WHERE lawyer_id = ? AND day_of_week = ?";

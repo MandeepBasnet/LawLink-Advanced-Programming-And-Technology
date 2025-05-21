@@ -63,10 +63,14 @@ public class AboutLawyerServlet extends HttpServlet {
         lawyer.setExperienceYears(experienceYears);
         lawyer.setSpecialization(specialization);
 
-        if (lawyerDAO.updateLawyer(lawyer)) {
-            request.setAttribute("success", "Profile updated successfully");
-        } else {
-            request.setAttribute("error", "Failed to update profile");
+        try {
+            if (lawyerDAO.updateLawyer(lawyer)) {
+                request.setAttribute("success", "Profile updated successfully");
+            } else {
+                request.setAttribute("error", "Failed to update profile");
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
 
         request.setAttribute("lawyer", lawyer);

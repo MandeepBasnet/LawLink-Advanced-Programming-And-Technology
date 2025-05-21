@@ -6,35 +6,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Profile - LawLink</title>
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/clientStyle.css">
+  <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/clientStyle.css?v=1">
 </head>
 <body>
 <!-- Navigation Bar -->
-<div class="navbar">
-  <div class="logo-container">
-    <img src="${pageContext.request.contextPath}/assets/images/logo.png" alt="LawLink Logo" class="logo-img">
-    <span class="logo-text">LawLink</span>
-  </div>
-
-  <div class="nav-links">
-    <a href="${pageContext.request.contextPath}/home">Home</a>
-    <a href="${pageContext.request.contextPath}/appointment">Appointment</a>
-    <a href="${pageContext.request.contextPath}/lawyers">Lawyers</a>
-    <a href="${pageContext.request.contextPath}/about-us">About Us</a>
-    <a href="${pageContext.request.contextPath}/contact-us">Contact Us</a>
-  </div>
-
-  <div class="profile">
-    <img src="${pageContext.request.contextPath}/${not empty user.profileImage ? user.profileImage : 'assets/images/profile_pic.png'}" alt="Profile" class="profile-pic">
-    <div class="profile-menu">
-      <a href="${pageContext.request.contextPath}/client/my-appointments">My Appointments</a>
-      <a href="${pageContext.request.contextPath}/client/my-profile">My Profile</a>
-      <form action="${pageContext.request.contextPath}/logout" method="post" style="margin:0;">
-        <button type="submit" class="menu-logout-btn">Logout</button>
-      </form>
+<header>
+  <div class="container header-content">
+    <div class="logo-container">
+      <img src="${pageContext.request.contextPath}/assets/images/logo.png" alt="LawLink Logo" class="logo">
+      <span class="logo-text">LawLink</span>
     </div>
+    <nav>
+      <ul>
+        <li><a href="${pageContext.request.contextPath}/home">Home</a></li>
+        <li><a href="${pageContext.request.contextPath}/appointment">Appointments</a></li>
+        <li><a href="${pageContext.request.contextPath}/lawyers">Lawyers</a></li>
+        <li><a href="${pageContext.request.contextPath}/about-us">About Us</a></li>
+        <li><a href="${pageContext.request.contextPath}/contact-us">Contact Us</a></li>
+        <c:choose>
+          <c:when test="${empty sessionScope.user}">
+            <li><a href="${pageContext.request.contextPath}/log-in" class="login-btn">Log In</a></li>
+          </c:when>
+          <c:otherwise>
+            <li>
+              <div class="profile">
+                <c:choose>
+                  <c:when test="${not empty sessionScope.user.profileImage}">
+                    <img src="${pageContext.request.contextPath}/${sessionScope.user.profileImage}" alt="Profile" class="profile-img">
+                  </c:when>
+                  <c:otherwise>
+                    <img src="${pageContext.request.contextPath}/assets/images/profile_pic.png" alt="Profile" class="profile-img">
+                  </c:otherwise>
+                </c:choose>
+                <div class="profile-menu">
+                  <a href="${pageContext.request.contextPath}/client/my-appointments">My Appointments</a>
+                  <a href="${pageContext.request.contextPath}/client/my-profile">My Profile</a>
+                  <form action="${pageContext.request.contextPath}/logout" method="post" style="margin:0;">
+                    <button type="submit">Logout</button>
+                  </form>
+                </div>
+              </div>
+            </li>
+          </c:otherwise>
+        </c:choose>
+      </ul>
+    </nav>
   </div>
-</div>
+</header>
 
 <!-- Main Content -->
 <div class="container">
@@ -144,6 +162,21 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
+    // Toggle profile menu on click for mobile devices
+    const profile = document.querySelector('.profile');
+    const profileImg = document.querySelector('.profile-img');
+    if (profile && profileImg) {
+      profileImg.addEventListener('click', () => {
+        profile.classList.toggle('active');
+      });
+      document.addEventListener('click', (e) => {
+        if (!profile.contains(e.target)) {
+          profile.classList.remove('active');
+        }
+      });
+    }
+
+    // Profile form handling
     const editBtn = document.getElementById('editProfileBtn');
     const saveBtn = document.getElementById('saveProfileBtn');
     const cancelBtn = document.getElementById('cancelEditBtn');
@@ -176,23 +209,19 @@
     const addressDisplay = document.getElementById('addressDisplay');
     const dateOfBirthDisplay = document.getElementById('dateOfBirthDisplay');
 
-    // Debugging: Check if edit button is found
     if (!editBtn) {
       console.error('Edit Profile button not found');
       return;
     }
 
-    // Client-side validation patterns
     const emailPattern = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/;
     const phonePattern = /^(\+\d{1,3}\s?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/;
     const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 
-    // Image preview
     profilePictureInput.addEventListener('change', (e) => {
       profilePictureError.textContent = '';
       const file = e.target.files[0];
       if (file) {
-        // Validate file type and size
         if (!['image/jpeg', 'image/png'].includes(file.type)) {
           profilePictureError.textContent = 'Only JPEG or PNG images are allowed.';
           e.target.value = '';
@@ -216,11 +245,7 @@
       }
     });
 
-    // Toggle edit mode
     editBtn.addEventListener('click', () => {
-      console.log('Edit Profile button clicked');
-      console.log('View elements:', viewElements.length);
-      console.log('Edit elements:', editElements.length);
       viewElements.forEach(el => el.style.display = 'none');
       editElements.forEach(el => el.style.display = 'block');
       editBtn.style.display = 'none';
@@ -228,7 +253,6 @@
       cancelBtn.style.display = 'inline-block';
     });
 
-    // Cancel edit
     cancelBtn.addEventListener('click', () => {
       viewElements.forEach(el => el.style.display = 'block');
       editElements.forEach(el => el.style.display = 'none');
@@ -247,12 +271,10 @@
       dateOfBirthError.textContent = '';
     });
 
-    // Form submission with AJAX
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       messageContainer.innerHTML = '';
 
-      // Client-side validation
       let isValid = true;
       fullNameError.textContent = '';
       emailError.textContent = '';
@@ -301,16 +323,11 @@
         return;
       }
 
-      // Show spinner and disable button
       spinner.style.display = 'block';
       saveBtn.disabled = true;
 
       try {
         const formData = new FormData(profileForm);
-        // Debug: Log form data
-        for (let [key, value] of formData.entries()) {
-          console.log(`FormData: ${key}=${value}`);
-        }
         const response = await fetch('${pageContext.request.contextPath}/client/my-profile', {
           method: 'POST',
           body: formData,
@@ -323,13 +340,11 @@
         spinner.style.display = 'none';
         saveBtn.disabled = false;
 
-        // Display message
         const messageDiv = document.createElement('div');
         messageDiv.className = result.success ? 'success-message' : 'error-message';
         messageDiv.textContent = result.message;
         messageContainer.appendChild(messageDiv);
 
-        // Always revert to view mode
         viewElements.forEach(el => el.style.display = 'block');
         editElements.forEach(el => el.style.display = 'none');
         editBtn.style.display = 'inline-block';
@@ -337,7 +352,6 @@
         cancelBtn.style.display = 'none';
 
         if (result.success) {
-          // Update UI with new data
           userNameDisplay.textContent = result.user.fullName;
           genderDisplay.textContent = result.user.gender;
           emailDisplay.textContent = result.user.email;
@@ -345,9 +359,8 @@
           addressDisplay.textContent = result.user.address;
           dateOfBirthDisplay.textContent = result.user.dateOfBirth || '';
           profilePicDisplay.src = result.user.profileImage ? '${pageContext.request.contextPath}/' + result.user.profileImage : '${pageContext.request.contextPath}/assets/images/profile_pic.png';
-          document.querySelector('.navbar .profile-pic').src = profilePicDisplay.src;
+          document.querySelector('header .profile-img').src = profilePicDisplay.src;
 
-          // Reset form
           profileForm.reset();
           profilePictureInput.value = '';
           imagePreview.style.display = 'none';
@@ -361,7 +374,6 @@
         messageDiv.textContent = 'An error occurred while saving your profile.';
         messageContainer.appendChild(messageDiv);
 
-        // Revert to view mode on error
         viewElements.forEach(el => el.style.display = 'block');
         editElements.forEach(el => el.style.display = 'none');
         editBtn.style.display = 'inline-block';

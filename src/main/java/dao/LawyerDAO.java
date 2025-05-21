@@ -6,12 +6,14 @@ import util.DBConnectionUtil;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Data Access Object for Lawyer entity
  */
 public class LawyerDAO {
 
+    private static final Logger LOGGER = Logger.getLogger(LawyerDAO.class.getName());
     private UserDAO userDAO;
 
     /**
@@ -40,6 +42,7 @@ public class LawyerDAO {
 
             if (!userCreated) {
                 conn.rollback();
+                LOGGER.warning("Failed to create user record for lawyer ID: " + lawyer.getUserId());
                 return false;
             }
 
@@ -65,20 +68,22 @@ public class LawyerDAO {
             if (rowsAffected > 0) {
                 lawyer.setLawyerId(lawyer.getUserId());
                 conn.commit();
+                LOGGER.info("Successfully created lawyer record for ID: " + lawyer.getUserId());
                 return true;
             } else {
                 conn.rollback();
+                LOGGER.warning("Failed to create lawyer record for ID: " + lawyer.getUserId());
                 return false;
             }
         } catch (SQLException e) {
+            LOGGER.severe("Error creating lawyer: " + e.getMessage());
             try {
                 if (conn != null) {
                     conn.rollback();
                 }
             } catch (SQLException ex) {
-                ex.printStackTrace();
+                LOGGER.severe("Error rolling back transaction: " + ex.getMessage());
             }
-            e.printStackTrace();
             return false;
         } finally {
             try {
@@ -90,7 +95,7 @@ public class LawyerDAO {
                     conn.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.severe("Error closing resources: " + e.getMessage());
             }
         }
     }
@@ -104,22 +109,37 @@ public class LawyerDAO {
         String sql = "SELECT u.*, l.* FROM Users u " +
                 "JOIN Lawyers l ON u.user_id = l.lawyer_id " +
                 "WHERE l.lawyer_id = ?";
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try {
+            conn = DBConnectionUtil.getConnection();
+            stmt = conn.prepareStatement(sql);
             stmt.setInt(1, lawyerId);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToLawyer(rs);
-                }
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                return mapResultSetToLawyer(rs);
             }
-
+            LOGGER.info("No lawyer found for ID: " + lawyerId);
             return null;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe("Error fetching lawyer by ID: " + lawyerId + ", " + e.getMessage());
             return null;
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                LOGGER.severe("Error closing resources: " + e.getMessage());
+            }
         }
     }
 
@@ -131,19 +151,36 @@ public class LawyerDAO {
         String sql = "SELECT u.*, l.* FROM Users u " +
                 "JOIN Lawyers l ON u.user_id = l.lawyer_id";
         List<Lawyer> lawyers = new ArrayList<>();
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet rs = null;
 
-        try (Connection conn = DBConnectionUtil.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
+        try {
+            conn = DBConnectionUtil.getConnection();
+            stmt = conn.createStatement();
+            rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 lawyers.add(mapResultSetToLawyer(rs));
             }
-
+            LOGGER.info("Retrieved " + lawyers.size() + " lawyers");
             return lawyers;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe("Error fetching all lawyers: " + e.getMessage());
             return lawyers;
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                LOGGER.severe("Error closing resources: " + e.getMessage());
+            }
         }
     }
 
@@ -158,22 +195,37 @@ public class LawyerDAO {
                 "WHERE u.is_active = TRUE AND l.is_available = TRUE " +
                 "ORDER BY l.lawyer_id ASC LIMIT ?";
         List<Lawyer> lawyers = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try {
+            conn = DBConnectionUtil.getConnection();
+            stmt = conn.prepareStatement(sql);
             stmt.setInt(1, limit);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    lawyers.add(mapResultSetToLawyer(rs));
-                }
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                lawyers.add(mapResultSetToLawyer(rs));
             }
-
+            LOGGER.info("Retrieved " + lawyers.size() + " first lawyers with limit: " + limit);
             return lawyers;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe("Error fetching first lawyers: " + e.getMessage());
             return lawyers;
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                LOGGER.severe("Error closing resources: " + e.getMessage());
+            }
         }
     }
 
@@ -189,22 +241,37 @@ public class LawyerDAO {
                 "JOIN PracticeAreas pa ON lpa.area_id = pa.area_id " +
                 "WHERE pa.area_name = ?";
         List<Lawyer> lawyers = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try {
+            conn = DBConnectionUtil.getConnection();
+            stmt = conn.prepareStatement(sql);
             stmt.setString(1, practiceArea);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    lawyers.add(mapResultSetToLawyer(rs));
-                }
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                lawyers.add(mapResultSetToLawyer(rs));
             }
-
+            LOGGER.info("Retrieved " + lawyers.size() + " lawyers for practice area: " + practiceArea);
             return lawyers;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe("Error fetching lawyers by practice area: " + e.getMessage());
             return lawyers;
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                LOGGER.severe("Error closing resources: " + e.getMessage());
+            }
         }
     }
 
@@ -217,19 +284,36 @@ public class LawyerDAO {
                 "JOIN Lawyers l ON u.user_id = l.lawyer_id " +
                 "WHERE l.is_available = TRUE";
         List<Lawyer> lawyers = new ArrayList<>();
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet rs = null;
 
-        try (Connection conn = DBConnectionUtil.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
+        try {
+            conn = DBConnectionUtil.getConnection();
+            stmt = conn.createStatement();
+            rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 lawyers.add(mapResultSetToLawyer(rs));
             }
-
+            LOGGER.info("Retrieved " + lawyers.size() + " available lawyers");
             return lawyers;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe("Error fetching available lawyers: " + e.getMessage());
             return lawyers;
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                LOGGER.severe("Error closing resources: " + e.getMessage());
+            }
         }
     }
 
@@ -238,70 +322,86 @@ public class LawyerDAO {
      * @param lawyer Lawyer object to update
      * @return true if successful, false otherwise
      */
-    public boolean updateLawyer(Lawyer lawyer) {
+    public boolean updateLawyer(Lawyer lawyer) throws SQLException {
         Connection conn = null;
-        PreparedStatement stmt = null;
+        PreparedStatement userStmt = null;
+        PreparedStatement lawyerStmt = null;
 
         try {
             conn = DBConnectionUtil.getConnection();
             conn.setAutoCommit(false);
 
-            // First, update the user record
-            boolean userUpdated = userDAO.updateUser(lawyer);
+            // Update Users table
+            String userSql = "UPDATE Users SET full_name = ?, email = ?, phone = ?, address = ?, gender = ?, profile_image = ?, date_of_birth = ? WHERE user_id = ?";
+            userStmt = conn.prepareStatement(userSql);
+            userStmt.setString(1, lawyer.getFullName());
+            userStmt.setString(2, lawyer.getEmail());
+            userStmt.setString(3, lawyer.getPhone());
+            userStmt.setString(4, lawyer.getAddress());
+            userStmt.setString(5, lawyer.getGender());
+            userStmt.setString(6, lawyer.getProfileImage());
+            userStmt.setString(7, lawyer.getDateOfBirth());
+            userStmt.setInt(8, lawyer.getUserId());
 
-            if (!userUpdated) {
-                conn.rollback();
-                return false;
-            }
+            LOGGER.info("Executing update query for Users table: userId=" + lawyer.getUserId() +
+                    ", fullName=" + lawyer.getFullName() + ", email=" + lawyer.getEmail());
 
-            // Then, update the lawyer record
-            String sql = "UPDATE Lawyers SET specialization = ?, practice_areas = ?, experience_years = ?, " +
+            int userRowsAffected = userStmt.executeUpdate();
+
+            // Update Lawyers table
+            String lawyerSql = "UPDATE Lawyers SET specialization = ?, practice_areas = ?, experience_years = ?, " +
                     "education = ?, license_number = ?, about_me = ?, consultation_fee = ?, " +
                     "is_verified = ?, is_available = ?, rating = ? WHERE lawyer_id = ?";
+            lawyerStmt = conn.prepareStatement(lawyerSql);
+            lawyerStmt.setString(1, lawyer.getSpecialization());
+            lawyerStmt.setString(2, lawyer.getPracticeAreas());
+            lawyerStmt.setInt(3, lawyer.getExperienceYears());
+            lawyerStmt.setString(4, lawyer.getEducation());
+            lawyerStmt.setString(5, lawyer.getLicenseNumber());
+            lawyerStmt.setString(6, lawyer.getAboutMe());
+            lawyerStmt.setBigDecimal(7, lawyer.getConsultationFee());
+            lawyerStmt.setBoolean(8, lawyer.isVerified());
+            lawyerStmt.setBoolean(9, lawyer.isAvailable());
+            lawyerStmt.setBigDecimal(10, lawyer.getRating());
+            lawyerStmt.setInt(11, lawyer.getLawyerId());
 
-            stmt = conn.prepareStatement(sql);
-            stmt.setString(1, lawyer.getSpecialization());
-            stmt.setString(2, lawyer.getPracticeAreas());
-            stmt.setInt(3, lawyer.getExperienceYears());
-            stmt.setString(4, lawyer.getEducation());
-            stmt.setString(5, lawyer.getLicenseNumber());
-            stmt.setString(6, lawyer.getAboutMe());
-            stmt.setBigDecimal(7, lawyer.getConsultationFee());
-            stmt.setBoolean(8, lawyer.isVerified());
-            stmt.setBoolean(9, lawyer.isAvailable());
-            stmt.setBigDecimal(10, lawyer.getRating());
-            stmt.setInt(11, lawyer.getLawyerId());
+            LOGGER.info("Executing update query for Lawyers table: lawyerId=" + lawyer.getLawyerId());
 
-            int rowsAffected = stmt.executeUpdate();
+            int lawyerRowsAffected = lawyerStmt.executeUpdate();
 
-            if (rowsAffected > 0) {
+            if (userRowsAffected > 0 && lawyerRowsAffected > 0) {
                 conn.commit();
+                LOGGER.info("Successfully updated lawyer profile for userId: " + lawyer.getUserId());
                 return true;
             } else {
                 conn.rollback();
+                LOGGER.warning("No rows affected: userRows=" + userRowsAffected + ", lawyerRows=" + lawyerRowsAffected +
+                        " for userId: " + lawyer.getUserId());
                 return false;
             }
         } catch (SQLException e) {
+            LOGGER.severe("Error updating lawyer profile for userId: " + lawyer.getUserId() + ", " + e.getMessage());
             try {
                 if (conn != null) {
                     conn.rollback();
                 }
             } catch (SQLException ex) {
-                ex.printStackTrace();
+                LOGGER.severe("Error rolling back transaction: " + ex.getMessage());
             }
-            e.printStackTrace();
-            return false;
+            throw e;
         } finally {
             try {
-                if (stmt != null) {
-                    stmt.close();
+                if (userStmt != null) {
+                    userStmt.close();
+                }
+                if (lawyerStmt != null) {
+                    lawyerStmt.close();
                 }
                 if (conn != null) {
-                    conn.setAutoCommit(true);
                     conn.close();
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.severe("Error closing resources: " + e.getMessage());
             }
         }
     }
@@ -314,18 +414,31 @@ public class LawyerDAO {
      */
     public boolean updateLawyerAvailability(int lawyerId, boolean isAvailable) {
         String sql = "UPDATE Lawyers SET is_available = ? WHERE lawyer_id = ?";
+        Connection conn = null;
+        PreparedStatement stmt = null;
 
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try {
+            conn = DBConnectionUtil.getConnection();
+            stmt = conn.prepareStatement(sql);
             stmt.setBoolean(1, isAvailable);
             stmt.setInt(2, lawyerId);
-
             int rowsAffected = stmt.executeUpdate();
+            LOGGER.info("Updated availability for lawyerId: " + lawyerId + ", rowsAffected: " + rowsAffected);
             return rowsAffected > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe("Error updating lawyer availability: " + e.getMessage());
             return false;
+        } finally {
+            try {
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                LOGGER.severe("Error closing resources: " + e.getMessage());
+            }
         }
     }
 
@@ -335,8 +448,9 @@ public class LawyerDAO {
      * @return true if successful, false otherwise
      */
     public boolean deleteLawyer(int lawyerId) {
-        // This will cascade to delete the lawyer record due to ON DELETE CASCADE
-        return userDAO.deleteUser(lawyerId);
+        boolean success = userDAO.deleteUser(lawyerId);
+        LOGGER.info("Deleted lawyerId: " + lawyerId + ", success: " + success);
+        return success;
     }
 
     /**
@@ -349,24 +463,39 @@ public class LawyerDAO {
                 "JOIN Lawyers l ON u.user_id = l.lawyer_id " +
                 "WHERE u.full_name LIKE ? OR l.specialization LIKE ?";
         List<Lawyer> lawyers = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
 
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        try {
+            conn = DBConnectionUtil.getConnection();
+            stmt = conn.prepareStatement(sql);
             String searchPattern = "%" + query + "%";
             stmt.setString(1, searchPattern);
             stmt.setString(2, searchPattern);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    lawyers.add(mapResultSetToLawyer(rs));
-                }
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                lawyers.add(mapResultSetToLawyer(rs));
             }
-
+            LOGGER.info("Found " + lawyers.size() + " lawyers for search query: " + query);
             return lawyers;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.severe("Error searching lawyers: " + e.getMessage());
             return lawyers;
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                LOGGER.severe("Error closing resources: " + e.getMessage());
+            }
         }
     }
 
@@ -387,6 +516,7 @@ public class LawyerDAO {
         lawyer.setFullName(rs.getString("full_name"));
         lawyer.setPhone(rs.getString("phone"));
         lawyer.setAddress(rs.getString("address"));
+        lawyer.setGender(rs.getString("gender"));
         lawyer.setRole(rs.getString("role"));
         lawyer.setRegistrationDate(rs.getTimestamp("registration_date"));
         lawyer.setLastLogin(rs.getTimestamp("last_login"));
@@ -398,6 +528,8 @@ public class LawyerDAO {
         lawyer.setResetTokenExpiry(rs.getTimestamp("reset_token_expiry"));
         lawyer.setOtp(rs.getString("otp"));
         lawyer.setOtpExpiry(rs.getTimestamp("otp_expiry"));
+        String dateOfBirth = rs.getString("date_of_birth");
+        lawyer.setDateOfBirth(dateOfBirth != null ? dateOfBirth : "");
 
         // Map Lawyer fields
         lawyer.setLawyerId(rs.getInt("lawyer_id"));
@@ -413,5 +545,12 @@ public class LawyerDAO {
         lawyer.setRating(rs.getBigDecimal("rating"));
 
         return lawyer;
+    }
+
+    /**
+     * Close method is a no-op as connections are managed per operation
+     */
+    public void close() throws SQLException {
+        LOGGER.info("No connection to close; managed per operation");
     }
 }

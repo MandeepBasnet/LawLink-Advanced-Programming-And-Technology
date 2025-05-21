@@ -15,8 +15,15 @@
     <span class="logo-text">LawLink</span>
   </div>
   <div class="user-info">
-    <img src="${pageContext.request.contextPath}/assets/images/john.png" alt="Lawyer" class="user-avatar">
-    <span class="user-name">Hari Narayan Acharya</span>
+    <c:choose>
+      <c:when test="${not empty sessionScope.user.profileImage}">
+        <img src="${pageContext.request.contextPath}/assets/images/${sessionScope.user.profileImage}" alt="Profile" class="user-avatar">
+      </c:when>
+      <c:otherwise>
+        <img src="${pageContext.request.contextPath}/assets/images/default.png" alt="Profile" class="user-avatar">
+      </c:otherwise>
+    </c:choose>
+    <span class="user-name"><c:out value="${sessionScope.user.fullName}"/></span>
     <span class="user-role">Lawyer</span>
     <form action="${pageContext.request.contextPath}/logout" method="post" style="display: inline;">
       <button type="submit" class="logout-btn">Logout</button>

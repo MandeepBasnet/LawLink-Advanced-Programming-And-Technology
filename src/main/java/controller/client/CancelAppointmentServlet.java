@@ -1,16 +1,15 @@
 package controller.client;
 
-import dao.AppointmentDAO;
 import model.Appointment;
 import model.User;
 import util.SessionUtil;
+import dao.AppointmentDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
 import java.io.IOException;
-import java.util.Date;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 

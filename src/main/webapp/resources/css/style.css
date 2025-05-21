@@ -1143,6 +1143,160 @@ footer {
   color: #666;
 }
 
+/* Review Page Styles (scoped to reviews.jsp) */
+.review-title {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.appointment-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  background-color: #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 40px;
+}
+
+.appointment-section .lawyer-image {
+  max-width: 150px; /* Maximum width to control size */
+  object-fit: contain; /* Ensures the entire image is visible */
+  border-radius: 8px;
+}
+
+.appointment-details {
+  flex: 1;
+}
+
+.appointment-title {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.appointment-info {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.appointment-info strong {
+  font-weight: bold;
+}
+
+.rating-section {
+  margin-top: 20px;
+}
+
+.rating-title {
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.stars {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+
+.star {
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #ccc;
+}
+
+.star.selected {
+  color: #D4AF37;
+}
+
+.comment-area {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+  font-size: 1rem;
+  margin-bottom: 15px;
+}
+
+.lawyer-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.submit-btn {
+  background-color: #556673;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.submit-btn:hover {
+  background-color: #3a4a5c;
+}
+
+.client-reviews {
+  margin-top: 40px;
+}
+
+.reviews-title {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.review-card {
+  background-color: #e5e7eb;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.review-date {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background-color: #d1d5db;
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.review-client, .review-lawyer {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.review-client strong, .review-lawyer strong {
+  font-weight: bold;
+}
+
+.review-stars {
+  margin-bottom: 10px;
+}
+
+.review-comment {
+  font-size: 0.9rem;
+  color: #333;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
   .login-container {
@@ -1259,6 +1413,29 @@ footer {
 
   .footer-content {
     flex-direction: column;
+  }
+
+  /* Responsive styles for reviews page */
+  .appointment-section {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .appointment-section .lawyer-image {
+    max-width: 100px; /* Adjusted for smaller screens */
+    object-fit: contain;
+  }
+
+  .review-title {
+    font-size: 1.5rem;
+  }
+
+  .appointment-title {
+    font-size: 1.2rem;
+  }
+
+  .submit-btn {
+    width: 100%;
   }
 }
 

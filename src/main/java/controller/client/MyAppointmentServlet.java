@@ -1,10 +1,11 @@
 package controller.client;
 
-import dao.AppointmentDAO;
 import dao.LawyerDAO;
 import model.Appointment;
 import model.User;
 import util.SessionUtil;
+import dao.AppointmentDAO;
+import dao.AppointmentDAO;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;

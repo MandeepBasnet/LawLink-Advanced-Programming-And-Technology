@@ -1,4 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,24 +10,28 @@
   <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/style.css">
 </head>
 <body>
-<jsp:include page="includes/header.jsp" />
-
+<jsp:include page="/WEB-INF/views/includes/header.jsp" />
 
 <div class="container">
   <h1 class="review-title">Submit Your Review</h1>
 
   <div class="appointment-section">
-    <img src="${pageContext.request.contextPath}/assets/lawyers/${appointment.lawyerImage}" alt="Lawyer"
+    <img src="${pageContext.request.contextPath}/assets/images/${appointment.lawyer.profileImage}" alt="Lawyer"
          class="lawyer-image"
-         onerror="this.src='${pageContext.request.contextPath}/assets/default-lawyer.jpg'">
+         onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
 
     <div class="appointment-details">
       <h2 class="appointment-title">Your Appointment</h2>
-      <p class="appointment-info"><strong>Appointment ID:</strong> ${appointment.id}</p>
-      <p class="appointment-info"><strong>Appointment Date:</strong> ${appointment.date}</p>
-      <p class="appointment-info"><strong>Appointment Time:</strong> ${appointment.time}</p>
-      <p class="appointment-info"><strong>Appointment Duration:</strong> ${appointment.duration}</p>
-      <p class="appointment-info"><strong>Appointment Status:</strong> ${appointment.status}</p>
+      <p class="appointment-info"><strong>Appointment ID:</strong> ${appointment.appointmentId}</p>
+      <p class="appointment-info"><strong>Appointment Date:</strong>
+        <fmt:formatDate value="${appointment.appointmentDate}" pattern="dd MMMM, yyyy" />
+      </p>
+      <p class="appointment-info"><strong>Appointment Time:</strong>
+        <fmt:formatDate value="${appointment.appointmentTime}" pattern="hh:mm a" />
+      </p>
+      <p class="appointment-info"><strong>Lawyer:</strong> ${appointment.lawyer.fullName}</p>
+      <p class="appointment-info"><strong>Specialization:</strong> ${appointment.lawyer.specialization}</p>
+      <p class="appointment-info"><strong>Status:</strong> ${appointment.status}</p>
 
       <div class="rating-section">
         <h3 class="rating-title">Rating:</h3>
@@ -37,15 +43,16 @@
           <span class="star" onclick="rateAppointment(5)">★</span>
         </div>
 
-        <form action="${pageContext.request.contextPath}/submitReview" method="post">
-          <input type="hidden" id="appointmentId" name="appointmentId" value="${appointment.id}">
+        <form action="${pageContext.request.contextPath}/client/submitReview" method="post">
+          <input type="hidden" id="appointmentId" name="appointmentId" value="${appointment.appointmentId}">
           <input type="hidden" id="ratingValue" name="rating" value="0">
+          <input type="hidden" name="csrfToken" value="${sessionScope.csrfToken}">
           <textarea class="comment-area" name="comment"
                     placeholder="Leave your comment here..."></textarea>
 
           <div class="lawyer-info">
-            <p>Yusha Shrestha</p>
-            <p>By: Hari Kumar</p>
+            <p>${appointment.lawyer.fullName}</p>
+            <p>By: ${sessionScope.user.fullName}</p>
           </div>
 
           <button type="submit" class="submit-btn">Submit Review</button>
@@ -57,39 +64,34 @@
 
 <div class="container client-reviews">
   <h2 class="reviews-title">Client Reviews</h2>
-
-  <div class="review-date">2005-2-20</div>
-  <p class="review-client"><strong>Client:</strong> Ram Nepal</p>
-  <p class="review-lawyer"><strong>Lawyer:</strong> Baviyan Koirala</p>
-
-  <div class="review-stars">
-    <%-- <c:forEach begin="1" end="5" var="i">--%>
-    <%-- <span class="star" style="color: #D4AF37;">★</span>--%>
-    <%-- </c:forEach>--%>
-  </div>
-
-  <div class="review-comment">
-    This is comment
-  </div>
+  <c:forEach var="review" items="${reviews}">
+    <div class="review-date">
+      <fmt:formatDate value="${review.reviewDate}" pattern="dd MMMM, yyyy" />
+    </div>
+    <p class="review-client"><strong>Client:</strong> <c:out value="${review.clientName}" /></p>
+    <p class="review-lawyer"><strong>Lawyer:</strong> <c:out value="${review.lawyerName}" /></p>
+    <div class="review-stars">
+      <c:forEach begin="1" end="${review.rating}">
+        <span class="star" style="color: #D4AF37;">★</span>
+      </c:forEach>
+      <c:forEach begin="${review.rating + 1}" end="5">
+        <span class="star" style="color: #ccc;">★</span>
+      </c:forEach>
+    </div>
+    <div class="review-comment"><c:out value="${review.comment}" /></div>
+  </c:forEach>
 </div>
-</body>
 
-<jsp:include page="includes/footer.jsp" />
+<jsp:include page="/WEB-INF/views/includes/footer.jsp" />
 
 <script>
   function rateAppointment(rating) {
-    // Set all stars to default color
     const stars = document.querySelectorAll('.stars .star');
     stars.forEach((star, index) => {
-      if (index < rating) {
-        star.style.color = '#D4AF37'; // Gold color for selected stars
-      } else {
-        star.style.color = '#ccc'; // Default color for unselected stars
-      }
+      star.style.color = index < rating ? '#D4AF37' : '#ccc';
     });
-
-    // Store the rating value
     document.getElementById('ratingValue').value = rating;
   }
 </script>
+</body>
 </html>

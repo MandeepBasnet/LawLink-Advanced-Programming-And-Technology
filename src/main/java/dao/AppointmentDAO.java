@@ -1,6 +1,7 @@
 package dao;
 
 import model.Appointment;
+import model.Lawyer;
 import util.DBConnectionUtil;
 
 import java.sql.*;
@@ -57,31 +58,45 @@ public class AppointmentDAO {
      * @param appointmentId ID of the appointment to retrieve
      * @return Appointment object if found, null otherwise
      */
-    public Appointment getAppointmentById(int appointmentId) {
-        String sql = "SELECT a.*, u1.full_name AS lawyer_name, u2.full_name AS client_name, l.consultation_fee " +
+    public Appointment getAppointmentById(int appointmentId) throws SQLException {
+        Appointment appointment = null;
+        String sql = "SELECT a.appointment_id, a.lawyer_id, a.client_id, a.appointment_date, a.appointment_time, " +
+                "a.duration, a.status, a.notes, a.created_at, a.updated_at, " +
+                "u.full_name AS lawyer_name, l.specialization, u.address, u.phone, u.profile_image " +
                 "FROM Appointments a " +
                 "JOIN Lawyers l ON a.lawyer_id = l.lawyer_id " +
-                "JOIN Users u1 ON l.lawyer_id = u1.user_id " +
-                "JOIN Clients c ON a.client_id = c.client_id " +
-                "JOIN Users u2 ON c.client_id = u2.user_id " +
+                "JOIN Users u ON l.lawyer_id = u.user_id " +
                 "WHERE a.appointment_id = ?";
 
         try (Connection conn = DBConnectionUtil.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setInt(1, appointmentId);
-
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return mapResultSetToAppointment(rs);
+                    appointment = new Appointment();
+                    appointment.setAppointmentId(rs.getInt("appointment_id"));
+                    appointment.setLawyerId(rs.getInt("lawyer_id"));
+                    appointment.setClientId(rs.getInt("client_id"));
+                    appointment.setAppointmentDate(rs.getDate("appointment_date"));
+                    appointment.setAppointmentTime(rs.getTime("appointment_time"));
+                    appointment.setDuration(rs.getInt("duration"));
+                    appointment.setStatus(rs.getString("status"));
+                    appointment.setNotes(rs.getString("notes"));
+                    appointment.setCreatedAt(rs.getTimestamp("created_at"));
+                    appointment.setUpdatedAt(rs.getTimestamp("updated_at"));
+
+                    Lawyer lawyer = new Lawyer();
+                    lawyer.setLawyerId(rs.getInt("lawyer_id"));
+                    lawyer.setFullName(rs.getString("lawyer_name"));
+                    lawyer.setSpecialization(rs.getString("specialization"));
+                    lawyer.setAddress(rs.getString("address"));
+                    lawyer.setPhone(rs.getString("phone"));
+                    lawyer.setProfileImage(rs.getString("profile_image"));
+                    appointment.setLawyer(lawyer);
                 }
             }
-
-            return null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
         }
+        return appointment;
     }
 
     /**

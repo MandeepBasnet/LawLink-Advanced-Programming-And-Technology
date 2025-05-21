@@ -292,3 +292,5 @@ SELECT l.lawyer_id, p.area_id
 FROM Lawyers l
          CROSS JOIN PracticeAreas p
 WHERE RAND() < 0.5; -- Randomly assign practice areas to lawyers
+
+ALTER TABLE Users ADD COLUMN date_of_birth VARCHAR(10);
