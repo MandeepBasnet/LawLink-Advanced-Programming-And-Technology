@@ -199,10 +199,32 @@ body {
 .appointments-table td {
     padding: 12px 15px;
     border-bottom: 1px solid #ddd;
+    background-color: transparent; /* Ensure no inherited background */
 }
 
 .appointments-table tr:last-child td {
     border-bottom: none;
+}
+
+.action-icon {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin-right: 5px;
+    background: none; /* Explicitly remove any background */
+    border: none;
+}
+
+.action-icon:hover {
+    opacity: 0.7;
+}
+
+.cancel-icon {
+    filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%); /* Red tint for cross icon */
+}
+
+.confirm-icon {
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(118%) contrast(119%); /* Green tint for tick icon */
 }
 
 .client-avatar {

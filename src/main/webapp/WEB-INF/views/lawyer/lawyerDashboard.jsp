@@ -1,7 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,6 +21,13 @@
     </jsp:include>
 
     <main class="main-content">
+        <c:if test="${not empty success}">
+            <div class="alert alert-success"><c:out value="${success}" /></div>
+        </c:if>
+        <c:if test="${not empty error}">
+            <div class="alert alert-danger"><c:out value="${error}" /></div>
+        </c:if>
+
         <div class="dashboard-stats">
             <div class="stat-card">
                 <img src="${pageContext.request.contextPath}/assets/images/appointment_icon.svg" alt="Appointments" class="stat-icon">
@@ -53,6 +60,7 @@
                     <th>Client</th>
                     <th>Time</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -66,18 +74,38 @@
                                 <img src="${pageContext.request.contextPath}/assets/images/profile_pic.png" alt="${appointment.clientName}" class="client-avatar">
                                 <c:out value="${appointment.clientName}" />
                             </td>
-                            <td><c:out value="${appointment.appointmentTime}" /></td>
+                            <td><fmt:formatDate value="${appointment.appointmentDate}" pattern="dd MMMM, yyyy" /> | <fmt:formatDate value="${appointment.appointmentTime}" pattern="hh:mm a" /></td>
                             <td>
                                 <span class="status-badge ${fn:toLowerCase(appointment.status)}">
                                     <c:out value="${appointment.status}" />
                                 </span>
+                            </td>
+                            <td>
+                                <c:choose>
+                                    <c:when test="${empty sessionScope.csrfToken}">
+                                        <span class="action-disabled" title="Please log in again to perform this action">Cancel</span>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img class="action-icon cancel-icon" src="${pageContext.request.contextPath}/assets/images/cross_icon.svg" alt="Cancel" onclick="cancelAppointment(<c:out value='${appointment.appointmentId}' />, '${fn:escapeXml(sessionScope.csrfToken)}')">
+                                    </c:otherwise>
+                                </c:choose>
+                                <c:if test="${appointment.status != 'CONFIRMED'}">
+                                    <c:choose>
+                                        <c:when test="${empty sessionScope.csrfToken}">
+                                            <span class="action-disabled" title="Please log in again to perform this action">Confirm</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img class="action-icon confirm-icon" src="${pageContext.request.contextPath}/assets/images/tick_icon.svg" alt="Confirm" onclick="confirmAppointment(<c:out value='${appointment.appointmentId}' />, '${fn:escapeXml(sessionScope.csrfToken)}')">
+                                        </c:otherwise>
+                                    </c:choose>
+                                </c:if>
                             </td>
                         </tr>
                     </c:if>
                 </c:forEach>
                 <c:if test="${!hasUpcoming}">
                     <tr>
-                        <td colspan="4">No upcoming appointments found.</td>
+                        <td colspan="5">No upcoming appointments found.</td>
                     </tr>
                 </c:if>
                 </tbody>
@@ -128,5 +156,60 @@
         </div>
     </main>
 </div>
+<script>
+    function cancelAppointment(appointmentId, csrfToken) {
+        if (!csrfToken) {
+            alert('Session expired or invalid. Please log in again.');
+            window.location.href = '${pageContext.request.contextPath}/log-in';
+            return;
+        }
+        if (confirm('Are you sure you want to cancel this appointment?')) {
+            fetch('${pageContext.request.contextPath}/lawyer/cancel-appointment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'appointmentId=' + appointmentId + '&csrfToken=' + encodeURIComponent(csrfToken)
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    return response.text().then(text => {
+                        alert('Failed to cancel appointment: ' + (text || 'Unknown error'));
+                        console.error('Server response:', text);
+                    });
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while cancelling the appointment.');
+            });
+        }
+    }
+
+    function confirmAppointment(appointmentId, csrfToken) {
+        if (!csrfToken) {
+            alert('Session expired or invalid. Please log in again.');
+            window.location.href = '${pageContext.request.contextPath}/log-in';
+            return;
+        }
+        if (confirm('Are you sure you want to confirm this appointment?')) {
+            fetch('${pageContext.request.contextPath}/lawyer/confirm-appointment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'appointmentId=' + appointmentId + '&csrfToken=' + encodeURIComponent(csrfToken)
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    return response.text().then(text => {
+                        alert('Failed to confirm appointment: ' + (text || 'Unknown error'));
+                        console.error('Server response:', text);
+                    });
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while confirming the appointment.');
+            });
+        }
+    }
+</script>
 </body>
 </html>
