@@ -41,35 +41,22 @@ public class ClientDAO {
             conn = DBConnectionUtil.getConnection();
             conn.setAutoCommit(false);
 
-            // Hash the password
-            String hashedPassword = PasswordUtil.hashPassword(client.getPassword());
-            if (hashedPassword == null) {
-                LOGGER.log(Level.SEVERE, "Failed to hash password for client: {0}", client.getEmail());
-                return false;
-            }
-            client.setPassword(hashedPassword);
-
-            // First, create the user record
-            boolean userCreated = userDAO.createUser(client);
-
-            if (!userCreated) {
-                conn.rollback();
-                return false;
+            // Hash the password (if not already hashed)
+            if (!client.getPassword().startsWith("$2a$")) { // Assuming bcrypt hash prefix
+                String hashedPassword = PasswordUtil.hashPassword(client.getPassword());
+                if (hashedPassword == null) {
+                    LOGGER.log(Level.SEVERE, "Failed to hash password for client: {0}", client.getEmail());
+                    return false;
+                }
+                client.setPassword(hashedPassword);
             }
 
-            // Then, create the client record
-            String sql = "INSERT INTO Clients (client_id, date_of_birth, gender) VALUES (?, ?, ?)";
+            // Insert into Clients table (user record should already exist)
+            String sql = "INSERT INTO Clients (client_id, gender) VALUES (?, ?)";
 
             stmt = conn.prepareStatement(sql);
             stmt.setInt(1, client.getUserId());
-
-            if (client.getDateOfBirthSql() != null) {
-                stmt.setDate(2, client.getDateOfBirthSql());
-            } else {
-                stmt.setNull(2, Types.DATE);
-            }
-
-            stmt.setString(3, client.getGender());
+            stmt.setString(2, client.getGender()); // gender can be null
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -119,7 +106,7 @@ public class ClientDAO {
                 }
                 if (conn != null) {
                     conn.setAutoCommit(true);
-                    conn.close();
+                    DBConnectionUtil.closeConnection(conn);
                 }
             } catch (SQLException e) {
                 LOGGER.log(Level.SEVERE, "Failed to close database resources", e);
@@ -150,7 +137,7 @@ public class ClientDAO {
 
             return null;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting client by ID", e);
             return null;
         }
     }
@@ -174,7 +161,7 @@ public class ClientDAO {
 
             return clients;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Error getting all clients", e);
             return clients;
         }
     }
@@ -201,18 +188,11 @@ public class ClientDAO {
             }
 
             // Then, update the client record
-            String sql = "UPDATE Clients SET date_of_birth = ?, gender = ? WHERE client_id = ?";
+            String sql = "UPDATE Clients SET gender = ? WHERE client_id = ?";
 
             stmt = conn.prepareStatement(sql);
-
-            if (client.getDateOfBirthSql() != null) {
-                stmt.setDate(1, client.getDateOfBirthSql());
-            } else {
-                stmt.setNull(1, Types.DATE);
-            }
-
-            stmt.setString(2, client.getGender());
-            stmt.setInt(3, client.getClientId());
+            stmt.setString(1, client.getGender());
+            stmt.setInt(2, client.getClientId());
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -229,9 +209,9 @@ public class ClientDAO {
                     conn.rollback();
                 }
             } catch (SQLException ex) {
-                ex.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to rollback transaction", ex);
             }
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to update client", e);
             return false;
         } finally {
             try {
@@ -240,10 +220,10 @@ public class ClientDAO {
                 }
                 if (conn != null) {
                     conn.setAutoCommit(true);
-                    conn.close();
+                    DBConnectionUtil.closeConnection(conn);
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Failed to close database resources", e);
             }
         }
     }
@@ -284,17 +264,20 @@ public class ClientDAO {
         client.setSessionExpiry(rs.getTimestamp("session_expiry"));
         client.setResetToken(rs.getString("reset_token"));
         client.setResetTokenExpiry(rs.getTimestamp("reset_token_expiry"));
+        client.setDateOfBirth(rs.getString("date_of_birth"));
+        client.setGender(rs.getString("gender"));
 
         // Map Client fields
         client.setClientId(rs.getInt("client_id"));
-        
-        // Use the SQL Date version for the client-specific field
-        java.sql.Date dob = rs.getDate("date_of_birth");
-        client.setDateOfBirthSql(dob);
-        // The setDateOfBirthSql method will also set the string version in the parent class
-        
         client.setGender(rs.getString("gender"));
 
         return client;
+    }
+
+    /**
+     * Close the DAO resources
+     */
+    public void close() {
+        userDAO.close();
     }
 }

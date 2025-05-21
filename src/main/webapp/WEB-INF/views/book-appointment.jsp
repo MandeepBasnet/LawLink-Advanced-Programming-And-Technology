@@ -29,7 +29,7 @@
                 <div class="lawyer-profile">
                     <c:choose>
                         <c:when test="${not empty lawyer}">
-                            <img src="${pageContext.request.contextPath}/assets/images/${lawyer.profileImage}" alt="${lawyer.fullName}'s profile picture" class="lawyer-image" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'" />
+                            <img src="${pageContext.request.contextPath}/${lawyer.profileImage != null ? lawyer.profileImage : 'assets/images/profile_pic.png'}?v=${System.currentTimeMillis()}" alt="${lawyer.fullName}'s profile picture" class="lawyer-image" />
                             <div class="lawyer-info">
                                 <h2 class="lawyer-name">${lawyer.fullName}</h2>
                                 <p class="lawyer-title">${lawyer.specialization}</p>
@@ -289,7 +289,7 @@
                                 '<h4 class="review-title">' + title + '</h4>' +
                                 '<p class="review-body">' + comment + '</p>' +
                                 '<div class="reviewer">' +
-                                '<img src="' + window.location.origin + '/assets/images/default-reviewer.png" alt="Reviewer avatar" class="reviewer-avatar" />' +
+                                '<img src="' + window.location.origin + '/images/default-user.jpg" alt="Reviewer avatar" class="reviewer-avatar" />' +
                                 '<div class="reviewer-info">' +
                                 '<div class="reviewer-name">' + (review.reviewerName || 'Anonymous') + '</div>' +
                                 '<div class="reviewer-date">' + date + '</div>' +

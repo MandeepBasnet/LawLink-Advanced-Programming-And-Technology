@@ -3,8 +3,6 @@ package controller.lawyer;
 import dao.LawyerDAO;
 import model.Lawyer;
 import model.User;
-import util.FileStorageUtil;
-import util.ImageUtil;
 import util.SessionUtil;
 import util.ValidationUtil;
 import jakarta.servlet.ServletException;
@@ -15,7 +13,11 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 @WebServlet(name = "LawyerProfileServlet", urlPatterns = {"/lawyer/lawyer-profile"})
@@ -26,6 +28,7 @@ public class LawyerProfileServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(LawyerProfileServlet.class.getName());
     private LawyerDAO lawyerDAO;
+    private static final String UPLOAD_DIR = "uploads/users";
 
     @Override
     public void init() throws ServletException {
@@ -143,6 +146,7 @@ public class LawyerProfileServlet extends HttpServlet {
             String oldProfileImage = lawyer.getProfileImage();
             String newProfileImage = oldProfileImage;
             if (profilePicturePart != null && profilePicturePart.getSize() > 0) {
+                // Validate file type
                 String contentType = profilePicturePart.getContentType();
                 if (!contentType.equals("image/jpeg") && !contentType.equals("image/png")) {
                     LOGGER.warning("Invalid file type: " + contentType);
@@ -155,8 +159,33 @@ public class LawyerProfileServlet extends HttpServlet {
                     request.getRequestDispatcher("/WEB-INF/views/lawyer/lawyerProfile.jsp").forward(request, response);
                     return;
                 }
-                newProfileImage = ImageUtil.resizeAndSaveProfileImage(profilePicturePart, lawyer.getUserId(), getServletContext());
-                LOGGER.info("New profile image saved: " + newProfileImage);
+
+                // Generate unique filename
+                String fileName = getSubmittedFileName(profilePicturePart);
+                if (fileName != null && !fileName.isEmpty()) {
+                    String extension = fileName.substring(fileName.lastIndexOf("."));
+                    String uniqueFileName = UUID.randomUUID().toString() + extension;
+                    String uploadPath = getServletContext().getRealPath("") + java.io.File.separator + UPLOAD_DIR;
+                    java.io.File uploadDir = new java.io.File(uploadPath);
+                    if (!uploadDir.exists()) {
+                        uploadDir.mkdirs();
+                    }
+                    try {
+                        Files.copy(profilePicturePart.getInputStream(), Paths.get(uploadPath, uniqueFileName), StandardCopyOption.REPLACE_EXISTING);
+                        newProfileImage = UPLOAD_DIR + "/" + uniqueFileName;
+                        LOGGER.info("New profile image saved: " + newProfileImage);
+                    } catch (IOException e) {
+                        LOGGER.severe("Failed to save image: " + e.getMessage());
+                        if ("XMLHttpRequest".equals(xhrHeader)) {
+                            sendJsonResponse(response, false, "Failed to upload image: " + e.getMessage());
+                            return;
+                        }
+                        request.setAttribute("errorMessage", "Failed to upload image: " + e.getMessage());
+                        request.setAttribute("lawyer", lawyer);
+                        request.getRequestDispatcher("/WEB-INF/views/lawyer/lawyerProfile.jsp").forward(request, response);
+                        return;
+                    }
+                }
             }
 
             // Update lawyer object
@@ -174,8 +203,13 @@ public class LawyerProfileServlet extends HttpServlet {
                 if (success) {
                     // Delete old profile image if a new one was uploaded
                     if (profilePicturePart != null && profilePicturePart.getSize() > 0 && oldProfileImage != null) {
-                        FileStorageUtil.deleteProfileImage(oldProfileImage, getServletContext());
-                        LOGGER.info("Deleted old profile image: " + oldProfileImage);
+                        String uploadPath = getServletContext().getRealPath("") + java.io.File.separator + oldProfileImage;
+                        try {
+                            Files.deleteIfExists(Paths.get(uploadPath));
+                            LOGGER.info("Deleted old profile image: " + oldProfileImage);
+                        } catch (IOException e) {
+                            LOGGER.warning("Failed to delete old profile image: " + oldProfileImage);
+                        }
                     }
                     // Update session user
                     session.setAttribute("user", lawyer);
@@ -187,8 +221,13 @@ public class LawyerProfileServlet extends HttpServlet {
                 } else {
                     // Clean up new profile image if update failed
                     if (newProfileImage != null && !newProfileImage.equals(oldProfileImage)) {
-                        FileStorageUtil.deleteProfileImage(newProfileImage, getServletContext());
-                        LOGGER.info("Cleaned up new profile image due to update failure: " + newProfileImage);
+                        String uploadPath = getServletContext().getRealPath("") + java.io.File.separator + newProfileImage;
+                        try {
+                            Files.deleteIfExists(Paths.get(uploadPath));
+                            LOGGER.info("Cleaned up new profile image: " + newProfileImage);
+                        } catch (IOException e) {
+                            LOGGER.warning("Failed to clean up new profile image: " + newProfileImage);
+                        }
                     }
                     LOGGER.warning("Failed to update lawyer profile in database for userId: " + lawyer.getUserId());
                     if ("XMLHttpRequest".equals(xhrHeader)) {
@@ -201,8 +240,13 @@ public class LawyerProfileServlet extends HttpServlet {
                 LOGGER.severe("Database error updating lawyer profile: " + e.getMessage());
                 // Clean up new profile image if update failed
                 if (newProfileImage != null && !newProfileImage.equals(oldProfileImage)) {
-                    FileStorageUtil.deleteProfileImage(newProfileImage, getServletContext());
-                    LOGGER.info("Cleaned up new profile image due to database error: " + newProfileImage);
+                    String uploadPath = getServletContext().getRealPath("") + java.io.File.separator + newProfileImage;
+                    try {
+                        Files.deleteIfExists(Paths.get(uploadPath));
+                        LOGGER.info("Cleaned up new profile image: " + newProfileImage);
+                    } catch (IOException ex) {
+                        LOGGER.warning("Failed to clean up new profile image: " + newProfileImage);
+                    }
                 }
                 if ("XMLHttpRequest".equals(xhrHeader)) {
                     sendJsonResponse(response, false, "Database error: " + e.getMessage());
@@ -250,5 +294,14 @@ public class LawyerProfileServlet extends HttpServlet {
         }
         out.print(json.toString());
         out.flush();
+    }
+
+    private String getSubmittedFileName(Part part) {
+        for (String content : part.getHeader("content-disposition").split(";")) {
+            if (content.trim().startsWith("filename")) {
+                return content.substring(content.indexOf('=') + 1).trim().replace("\"", "");
+            }
+        }
+        return null;
     }
 }

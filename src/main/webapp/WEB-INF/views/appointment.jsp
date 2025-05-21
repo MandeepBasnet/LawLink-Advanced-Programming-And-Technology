@@ -20,7 +20,7 @@
             <c:forEach var="lawyer" items="${lawyers}">
                 <div class="lawyer-card">
                     <div class="lawyer-image">
-                        <img src="${pageContext.request.contextPath}/assets/images/${lawyer.profileImage}" alt="${lawyer.fullName}" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                        <img src="${pageContext.request.contextPath}/${lawyer.profileImage != null ? lawyer.profileImage : 'assets/images/profile_pic.png'}?v=${System.currentTimeMillis()}" alt="${lawyer.fullName}">
                     </div>
                     <div class="lawyer-info">
                         <h2 class="lawyer-name">${lawyer.fullName}</h2>
@@ -39,7 +39,7 @@
             <!-- Fallback hardcoded lawyers -->
             <div class="lawyer-card">
                 <div class="lawyer-image">
-                    <img src="${pageContext.request.contextPath}/assets/images/zaina.png" alt="Zaina Rai" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                    <img src="${pageContext.request.contextPath}/assets/images/zaina.png" alt="Zaina Rai" onerror="this.src='${pageContext.request.contextPath}/images/default-user.jpg'">
                 </div>
                 <div class="lawyer-info">
                     <h2 class="lawyer-name">Zaina Rai</h2>
@@ -54,7 +54,7 @@
             </div>
             <div class="lawyer-card">
                 <div class="lawyer-image">
-                    <img src="${pageContext.request.contextPath}/assets/images/rayan.png" alt="Rayan Rajbangsi" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                    <img src="${pageContext.request.contextPath}/assets/images/rayan.png" alt="Rayan Rajbangsi" onerror="this.src='${pageContext.request.contextPath}/images/default-user.jpg'">
                 </div>
                 <div class="lawyer-info">
                     <h2 class="lawyer-name">Rayan Rajbangsi</h2>
@@ -69,7 +69,7 @@
             </div>
             <div class="lawyer-card">
                 <div class="lawyer-image">
-                    <img src="${pageContext.request.contextPath}/assets/images/manish.png" alt="Manish Khanal" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png ваше имя'">
+                    <img src="${pageContext.request.contextPath}/assets/images/manish.png" alt="Manish Khanal" onerror="this.src='${pageContext.request.contextPath}/images/default-user.jpg'">
                 </div>
                 <div class="lawyer-info">
                     <h2 class="lawyer-name">Manish Khanal</h2>

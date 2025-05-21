@@ -2,8 +2,6 @@ package dao;
 
 import model.User;
 import util.DBConnectionUtil;
-import util.ImageUtil;
-import util.FileStorageUtil;
 import util.PasswordUtil;
 import java.sql.*;
 import java.util.ArrayList;
@@ -77,10 +75,20 @@ public class UserDAO {
             System.out.println("Hashed password for user: " + user.getUsername());
 
             if (profilePicturePart != null && profilePicturePart.getSize() > 0) {
-                System.out.println("Profile picture provided, size: " + profilePicturePart.getSize() + " bytes");
-                String profileImagePath = ImageUtil.resizeAndSaveProfileImage(profilePicturePart, 0, servletContext);
-                user.setProfileImage(profileImagePath);
-                System.out.println("Profile image saved: " + profileImagePath);
+                String fileName = getSubmittedFileName(profilePicturePart);
+                if (fileName != null && !fileName.isEmpty()) {
+                    String extension = fileName.substring(fileName.lastIndexOf("."));
+                    String uniqueFileName = java.util.UUID.randomUUID().toString() + extension;
+                    String uploadPath = servletContext.getRealPath("") + java.io.File.separator + "uploads/users";
+                    java.io.File uploadDir = new java.io.File(uploadPath);
+                    if (!uploadDir.exists()) {
+                        uploadDir.mkdirs();
+                    }
+                    java.nio.file.Files.copy(profilePicturePart.getInputStream(), java.nio.file.Paths.get(uploadPath, uniqueFileName), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                    String profileImagePath = "uploads/users/" + uniqueFileName;
+                    user.setProfileImage(profileImagePath);
+                    System.out.println("Profile image saved: " + profileImagePath);
+                }
             } else {
                 System.out.println("No profile picture provided");
                 user.setProfileImage(null);
@@ -88,21 +96,17 @@ public class UserDAO {
 
             boolean success = createUser(user);
             System.out.println("User creation success: " + success);
-
-            if (success && user.getProfileImage() != null) {
-                String finalProfileImagePath = ImageUtil.resizeAndSaveProfileImage(profilePicturePart, user.getUserId(), servletContext);
-                user.setProfileImage(finalProfileImagePath);
-                System.out.println("Final profile image saved: " + finalProfileImagePath);
-                updateUserProfile(user);
-                System.out.println("User profile updated with final image path");
-            }
-
             return success;
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Failed to register user: " + e.getMessage(), e);
             if (user.getProfileImage() != null) {
-                FileStorageUtil.deleteProfileImage(user.getProfileImage(), servletContext);
-                System.out.println("Cleaned up profile image: " + user.getProfileImage());
+                String uploadPath = servletContext.getRealPath("") + java.io.File.separator + user.getProfileImage();
+                try {
+                    java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(uploadPath));
+                    System.out.println("Cleaned up profile image: " + user.getProfileImage());
+                } catch (java.io.IOException ex) {
+                    LOGGER.warning("Failed to clean up profile image: " + user.getProfileImage());
+                }
             }
             return false;
         }
@@ -449,5 +453,14 @@ public class UserDAO {
                 }
             }
         }
+    }
+
+    private String getSubmittedFileName(Part part) {
+        for (String content : part.getHeader("content-disposition").split(";")) {
+            if (content.trim().startsWith("filename")) {
+                return content.substring(content.indexOf('=') + 1).trim().replace("\"", "");
+            }
+        }
+        return null;
     }
 }

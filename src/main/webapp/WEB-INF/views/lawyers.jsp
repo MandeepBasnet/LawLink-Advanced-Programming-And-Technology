@@ -18,7 +18,7 @@
         <c:when test="${not empty lawyers}">
             <c:forEach var="lawyer" items="${lawyers}">
                 <div class="team-member">
-                    <img src="${pageContext.request.contextPath}/assets/images/${lawyer.profileImage}" alt="${lawyer.fullName}" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                    <img src="${pageContext.request.contextPath}/${lawyer.profileImage != null ? lawyer.profileImage : 'assets/images/profile_pic.png'}?v=${System.currentTimeMillis()}" alt="${lawyer.fullName}">
                     <div class="member-info">
                         <h2 class="member-name">${lawyer.fullName}</h2>
                         <p class="member-title">${lawyer.specialization}</p>

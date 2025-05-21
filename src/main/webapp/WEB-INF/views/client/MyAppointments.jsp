@@ -34,7 +34,7 @@
               <div class="profile">
                 <c:choose>
                   <c:when test="${not empty sessionScope.user.profileImage}">
-                    <img src="${pageContext.request.contextPath}/${sessionScope.user.profileImage}" alt="Profile" class="profile-img">
+                    <img src="${pageContext.request.contextPath}/${sessionScope.user.profileImage}?v=${System.currentTimeMillis()}" alt="Profile" class="profile-img">
                   </c:when>
                   <c:otherwise>
                     <img src="${pageContext.request.contextPath}/assets/images/profile_pic.png" alt="Profile" class="profile-img">
@@ -76,7 +76,7 @@
       <c:otherwise>
         <c:forEach var="appointment" items="${appointments}">
           <div class="appointment-card">
-            <img src="${pageContext.request.contextPath}/assets/images/${appointment.lawyer.profileImage}" alt="${appointment.lawyerName}" class="lawyer-img" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'" />
+            <img src="${pageContext.request.contextPath}/${appointment.lawyer.profileImage != null ? appointment.lawyer.profileImage : 'assets/images/profile_pic.png'}?v=${System.currentTimeMillis()}" alt="${appointment.lawyerName}" class="lawyer-img" />
 
             <div class="appointment-details">
               <div class="lawyer-name"><c:out value="${appointment.lawyerName}" /></div>

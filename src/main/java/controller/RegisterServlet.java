@@ -1,7 +1,9 @@
 package controller;
 
 import dao.UserDAO;
+import dao.ClientDAO;
 import model.User;
+import model.Client;
 import util.ValidationUtil;
 
 import jakarta.servlet.ServletException;
@@ -53,6 +55,8 @@ public class RegisterServlet extends HttpServlet {
         String fullName = ValidationUtil.sanitizeInput(request.getParameter("fullName"));
         String password = request.getParameter("password");
         String confirmPassword = request.getParameter("confirmPassword");
+        String dateOfBirth = ValidationUtil.sanitizeInput(request.getParameter("dateOfBirth"));
+        String gender = ValidationUtil.sanitizeInput(request.getParameter("gender"));
         Part profilePicturePart = null;
 
         try {
@@ -85,9 +89,20 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
+        // Validate gender (if provided, must match ENUM values)
+        if (!ValidationUtil.isEmpty(gender) && !gender.matches("MALE|FEMALE|OTHER")) {
+            LOGGER.warning("Validation failed: Invalid gender value: " + gender);
+            request.setAttribute("error", "Invalid gender value.");
+            request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+            return;
+        }
+
         UserDAO userDAO = null;
+        ClientDAO clientDAO = null;
         try {
             userDAO = new UserDAO();
+            clientDAO = new ClientDAO();
+
             // Check if email is already registered
             if (userDAO.getUserByEmail(email) != null) {
                 LOGGER.warning("Validation failed: Email already registered: " + email);
@@ -98,15 +113,48 @@ public class RegisterServlet extends HttpServlet {
 
             // Create new user
             User newUser = new User(username, password, email, fullName, "CLIENT");
+            if (!ValidationUtil.isEmpty(dateOfBirth)) {
+                try {
+                    newUser.setDateOfBirth(dateOfBirth);
+                } catch (IllegalArgumentException e) {
+                    LOGGER.warning("Invalid date format for dateOfBirth: " + dateOfBirth);
+                    request.setAttribute("error", "Invalid date of birth format.");
+                    request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+                    return;
+                }
+            }
+            if (!ValidationUtil.isEmpty(gender)) {
+                newUser.setGender(gender);
+            }
 
             // Register user with profile picture
-            boolean success = userDAO.registerUser(newUser, profilePicturePart, getServletContext());
+            boolean userSuccess = userDAO.registerUser(newUser, profilePicturePart, getServletContext());
 
-            if (success) {
-                LOGGER.info("User registered successfully: " + email);
-                response.sendRedirect(request.getContextPath() + "/home");
+            if (userSuccess) {
+                // Create client object
+                Client newClient = new Client(username, password, email, fullName);
+                newClient.setUserId(newUser.getUserId()); // Set user ID from created user
+                if (!ValidationUtil.isEmpty(gender)) {
+                    newClient.setGender(gender); // Set gender if provided
+                } else {
+                    newClient.setGender(null); // Nullable in Clients table
+                }
+
+                // Register client
+                boolean clientSuccess = clientDAO.registerClient(newClient);
+
+                if (clientSuccess) {
+                    LOGGER.info("User and client registered successfully: " + email);
+                    response.sendRedirect(request.getContextPath() + "/home");
+                } else {
+                    LOGGER.warning("Client registration failed for user: " + email);
+                    // Clean up user record if client registration fails
+                    userDAO.deleteUser(newUser.getUserId());
+                    request.setAttribute("error", "Registration failed. Try again.");
+                    request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
+                }
             } else {
-                LOGGER.warning("Registration failed for user: " + email);
+                LOGGER.warning("User registration failed for user: " + email);
                 request.setAttribute("error", "Registration failed. Try again.");
                 request.getRequestDispatcher("/WEB-INF/views/register.jsp").forward(request, response);
             }

@@ -53,7 +53,7 @@
                     <tr>
                         <td><c:out value="${loop.count}" /></td>
                         <td>
-                            <img src="${pageContext.request.contextPath}/${empty client.profileImage ? 'assets/images/default.png' : client.profileImage}" alt="<c:out value='${client.fullName}' />" class="client-avatar">
+                            <img src="${pageContext.request.contextPath}/${empty client.profileImage ? 'assets/images/profile_pic.png' : client.profileImage}?v=${System.currentTimeMillis()}" alt="<c:out value='${client.fullName}' />" class="client-avatar">
                             <c:out value="${client.fullName}" />
                         </td>
                         <td><c:out value="${client.username}" /></td>

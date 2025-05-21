@@ -64,7 +64,7 @@
             <c:when test="${not empty attorneys}">
                 <c:forEach var="attorney" items="${attorneys}">
                     <div class="attorney-card">
-                        <img src="${pageContext.request.contextPath}/assets/images/${attorney.profileImage}" alt="${attorney.fullName}" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                        <img src="${pageContext.request.contextPath}/${attorney.profileImage != null ? attorney.profileImage : 'assets/images/profile_pic.png'}?v=${System.currentTimeMillis()}" alt="${attorney.fullName}">
                         <div class="attorney-info">
                             <h3>${attorney.fullName}</h3>
                             <p>${attorney.aboutMe}</p>
@@ -79,7 +79,7 @@
             <c:otherwise>
                 <!-- Fallback hardcoded attorneys -->
                 <div class="attorney-card">
-                    <img src="${pageContext.request.contextPath}/assets/images/zaina.png" alt="Zaina Rai" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                    <img src="${pageContext.request.contextPath}/assets/images/zaina.png" alt="Zaina Rai" onerror="this.src='${pageContext.request.contextPath}assets/images/profile_pic.png'">
                     <div class="attorney-info">
                         <h3>Zaina Rai</h3>
                         <p>She has won 100+ cases till now, one of the most demanding attorneys at your service.</p>
@@ -90,7 +90,7 @@
                     </div>
                 </div>
                 <div class="attorney-card">
-                    <img src="${pageContext.request.contextPath}/assets/images/rayan.png" alt="Rayan Rajbangsi" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                    <img src="${pageContext.request.contextPath}/assets/images/rayan.png" alt="Rayan Rajbangsi" onerror="this.src='${pageContext.request.contextPath}assets/images/profile_pic.png'">
                     <div class="attorney-info">
                         <h3>Rayan Rajbangsi</h3>
                         <p>With the experience of 5 years, he has been thriving in our company.</p>
@@ -101,7 +101,7 @@
                     </div>
                 </div>
                 <div class="attorney-card">
-                    <img src="${pageContext.request.contextPath}/assets/images/manish.png" alt="Manish Khanal" onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+                    <img src="${pageContext.request.contextPath}/assets/images/manish.png" alt="Manish Khanal" onerror="this.src='${pageContext.request.contextPath}assets/images/profile_pic.png'">
                     <div class="attorney-info">
                         <h3>Manish Khanal</h3>
                         <p>Experienced lawyer specializing in Family Law.</p>
@@ -123,7 +123,7 @@
         <c:forEach var="testimonial" items="${testimonials}" varStatus="status">
             <div class="testimonial-card">
                 <div class="testimonial-image">
-                    <img src="${pageContext.request.contextPath}/assets/images/upload_area.png" alt="${testimonial.name}">
+                    <img src="${pageContext.request.contextPath}/images/default-user.jpg" alt="${testimonial.name}">
                 </div>
                 <div class="testimonial-content">
                     <h3>${testimonial.name}</h3>
@@ -135,7 +135,7 @@
         <c:if test="${empty testimonials}">
             <div class="testimonial-card">
                 <div class="testimonial-image">
-                    <img src="${pageContext.request.contextPath}/assets/images/john.png" alt="Jhon Basnet">
+                    <img src="${pageContext.request.contextPath}/assets/images/profile_pic.png" alt="Jhon Basnet">
                 </div>
                 <div class="testimonial-content">
                     <h3>Jhon Basnet</h3>

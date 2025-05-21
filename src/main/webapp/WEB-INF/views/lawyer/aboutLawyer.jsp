@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About Lawyer - LawLink</title>
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/lawyerStyle.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/lawyerStyle.css">
     <style>
         .profile-container {
             background-color: #f2f2f2;
@@ -80,7 +80,7 @@
 
     <div class="main-content">
         <div class="profile-container">
-            <img src="${pageContext.request.contextPath}/assets/images/${lawyer.profileImage != null ? lawyer.profileImage : 'default.png'}" alt="Lawyer Profile" class="profile-image">
+            <img src="${pageContext.request.contextPath}/${lawyer.profileImage != null ? lawyer.profileImage : 'images/default-user.jpg'}?v=${System.currentTimeMillis()}" alt="Lawyer Profile" class="profile-image">
 
             <div class="content-blocks">
                 <div class="info-block">

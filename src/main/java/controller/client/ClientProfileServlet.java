@@ -10,15 +10,17 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.Part;
 import model.User;
-import util.FileStorageUtil;
-import util.ImageUtil;
 import util.SessionUtil;
 import util.ValidationUtil;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
@@ -31,13 +33,14 @@ import java.util.logging.Logger;
 public class ClientProfileServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ClientProfileServlet.class.getName());
+    private static final String UPLOAD_DIR = "uploads/users";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         if (session == null || SessionUtil.getLoggedInUser(request) == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(request.getContextPath() + "/log-in");
             return;
         }
 
@@ -48,7 +51,7 @@ public class ClientProfileServlet extends HttpServlet {
             User user = userDAO.getUserById(sessionUser.getUserId());
             if (user == null) {
                 request.setAttribute("errorMessage", "User not found.");
-                response.sendRedirect(request.getContextPath() + "/login");
+                response.sendRedirect(request.getContextPath() + "/log-in");
                 return;
             }
             request.setAttribute("user", user);
@@ -66,13 +69,14 @@ public class ClientProfileServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        LOGGER.info("X-Requested-With header: " + request.getHeader("X-Requested-With"));
         HttpSession session = request.getSession(false);
         if (session == null || SessionUtil.getLoggedInUser(request) == null) {
             if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
                 sendJsonResponse(response, false, "User not logged in.");
                 return;
             }
-            response.sendRedirect(request.getContextPath() + "/login");
+            response.sendRedirect(request.getContextPath() + "/log-in");
             return;
         }
 
@@ -87,7 +91,7 @@ public class ClientProfileServlet extends HttpServlet {
                     return;
                 }
                 request.setAttribute("errorMessage", "User not found.");
-                response.sendRedirect(request.getContextPath() + "/login");
+                response.sendRedirect(request.getContextPath() + "/log-in");
                 return;
             }
 
@@ -145,6 +149,7 @@ public class ClientProfileServlet extends HttpServlet {
             // Handle profile picture
             String oldProfileImage = user.getProfileImage();
             String newProfileImage = oldProfileImage;
+            LOGGER.info("Old profile image: " + oldProfileImage);
             if (profilePicturePart != null && profilePicturePart.getSize() > 0) {
                 // Validate file type
                 String contentType = profilePicturePart.getContentType();
@@ -158,8 +163,33 @@ public class ClientProfileServlet extends HttpServlet {
                     request.getRequestDispatcher("/WEB-INF/views/client/MyProfile.jsp").forward(request, response);
                     return;
                 }
-                // Resize and save image
-                newProfileImage = ImageUtil.resizeAndSaveProfileImage(profilePicturePart, user.getUserId(), getServletContext());
+
+                // Generate unique filename
+                String fileName = getSubmittedFileName(profilePicturePart);
+                if (fileName != null && !fileName.isEmpty()) {
+                    String extension = fileName.substring(fileName.lastIndexOf("."));
+                    String uniqueFileName = UUID.randomUUID().toString() + extension;
+                    String uploadPath = getServletContext().getRealPath("") + java.io.File.separator + UPLOAD_DIR;
+                    java.io.File uploadDir = new java.io.File(uploadPath);
+                    if (!uploadDir.exists()) {
+                        uploadDir.mkdirs();
+                    }
+                    try {
+                        Files.copy(profilePicturePart.getInputStream(), Paths.get(uploadPath, uniqueFileName), StandardCopyOption.REPLACE_EXISTING);
+                        newProfileImage = UPLOAD_DIR + "/" + uniqueFileName;
+                        LOGGER.info("New profile image saved: " + newProfileImage);
+                    } catch (IOException e) {
+                        LOGGER.severe("Failed to save image: " + e.getMessage());
+                        if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
+                            sendJsonResponse(response, false, "Failed to upload image: " + e.getMessage());
+                            return;
+                        }
+                        request.setAttribute("errorMessage", "Failed to upload image: " + e.getMessage());
+                        request.setAttribute("user", user);
+                        request.getRequestDispatcher("/WEB-INF/views/client/MyProfile.jsp").forward(request, response);
+                        return;
+                    }
+                }
             }
 
             // Update user object
@@ -176,7 +206,13 @@ public class ClientProfileServlet extends HttpServlet {
             if (success) {
                 // Delete old profile image if a new one was uploaded
                 if (profilePicturePart != null && profilePicturePart.getSize() > 0 && oldProfileImage != null) {
-                    FileStorageUtil.deleteProfileImage(oldProfileImage, getServletContext());
+                    String uploadPath = getServletContext().getRealPath("") + java.io.File.separator + oldProfileImage;
+                    try {
+                        Files.deleteIfExists(Paths.get(uploadPath));
+                        LOGGER.info("Old profile image deleted: " + oldProfileImage);
+                    } catch (IOException e) {
+                        LOGGER.warning("Failed to delete old profile image: " + oldProfileImage);
+                    }
                 }
                 // Update session user
                 session.setAttribute("user", user);
@@ -188,7 +224,13 @@ public class ClientProfileServlet extends HttpServlet {
             } else {
                 // Clean up new profile image if update failed
                 if (newProfileImage != null && !newProfileImage.equals(oldProfileImage)) {
-                    FileStorageUtil.deleteProfileImage(newProfileImage, getServletContext());
+                    String uploadPath = getServletContext().getRealPath("") + java.io.File.separator + newProfileImage;
+                    try {
+                        Files.deleteIfExists(Paths.get(uploadPath));
+                        LOGGER.info("Cleaned up new profile image: " + newProfileImage);
+                    } catch (IOException e) {
+                        LOGGER.warning("Failed to clean up new profile image: " + newProfileImage);
+                    }
                 }
                 if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
                     sendJsonResponse(response, false, "Failed to update profile.");
@@ -206,15 +248,6 @@ public class ClientProfileServlet extends HttpServlet {
                 return;
             }
             request.setAttribute("errorMessage", "Database error occurred while updating profile.");
-            request.setAttribute("user", sessionUser);
-            request.getRequestDispatcher("/WEB-INF/views/client/MyProfile.jsp").forward(request, response);
-        } catch (IOException e) {
-            LOGGER.severe("IO error: " + e.getMessage());
-            if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-                sendJsonResponse(response, false, "Error processing profile picture.");
-                return;
-            }
-            request.setAttribute("errorMessage", "Error processing profile picture.");
             request.setAttribute("user", sessionUser);
             request.getRequestDispatcher("/WEB-INF/views/client/MyProfile.jsp").forward(request, response);
         } finally {
@@ -248,5 +281,14 @@ public class ClientProfileServlet extends HttpServlet {
         }
         out.print(json.toString());
         out.flush();
+    }
+
+    private String getSubmittedFileName(Part part) {
+        for (String content : part.getHeader("content-disposition").split(";")) {
+            if (content.trim().startsWith("filename")) {
+                return content.substring(content.indexOf('=') + 1).trim().replace("\"", "");
+            }
+        }
+        return null;
     }
 }

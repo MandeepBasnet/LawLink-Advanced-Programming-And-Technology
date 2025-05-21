@@ -19,8 +19,49 @@
                 alert('Please enter a valid consultation fee.');
                 return false;
             }
+            const lawyerImage = document.getElementById('lawyer-image').files[0];
+            if (lawyerImage) {
+                const validTypes = ['image/jpeg', 'image/png'];
+                if (!validTypes.includes(lawyerImage.type)) {
+                    alert('Only JPEG or PNG images are allowed.');
+                    return false;
+                }
+                if (lawyerImage.size > 10 * 1024 * 1024) {
+                    alert('Image size must be less than 10MB.');
+                    return false;
+                }
+            }
             return true;
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const lawyerImageInput = document.getElementById('lawyer-image');
+            const avatarPlaceholder = document.querySelector('.avatar-placeholder img');
+            const imagePreview = document.createElement('div');
+            imagePreview.className = 'image-preview';
+            imagePreview.style.display = 'none';
+            const previewImage = document.createElement('img');
+            previewImage.alt = 'Image Preview';
+            previewImage.style.maxWidth = '100px';
+            imagePreview.appendChild(previewImage);
+            lawyerImageInput.parentElement.appendChild(imagePreview);
+
+            lawyerImageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        previewImage.src = event.target.result;
+                        imagePreview.style.display = 'block';
+                        avatarPlaceholder.style.display = 'none';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreview.style.display = 'none';
+                    avatarPlaceholder.style.display = 'block';
+                }
+            });
+        });
     </script>
 </head>
 <body>
@@ -45,10 +86,10 @@
             <form action="${pageContext.request.contextPath}/admin/admin-add-lawyer" method="post" class="add-lawyer-form" enctype="multipart/form-data" onsubmit="return validateForm()">
                 <div class="upload-section">
                     <div class="avatar-placeholder">
-                        <img src="${pageContext.request.contextPath}/assets/images/upload_icon.png" alt="Upload Lawyer Image">
+                        <img src="${pageContext.request.contextPath}/assets/images/upload_icon.png" alt="Lawyer Image">
                     </div>
                     <label for="lawyer-image" class="upload-btn">Upload Lawyer Image</label>
-                    <input type="file" id="lawyer-image" name="lawyerImage" accept="image/*" style="display: none;">
+                    <input type="file" id="lawyer-image" name="lawyerImage" accept="image/jpeg,image/png" style="display: none;">
                 </div>
 
                 <div class="form-grid">

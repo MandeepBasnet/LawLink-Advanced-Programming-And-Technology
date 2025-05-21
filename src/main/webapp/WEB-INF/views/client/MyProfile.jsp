@@ -30,14 +30,7 @@
           <c:otherwise>
             <li>
               <div class="profile">
-                <c:choose>
-                  <c:when test="${not empty sessionScope.user.profileImage}">
-                    <img src="${pageContext.request.contextPath}/${sessionScope.user.profileImage}" alt="Profile" class="profile-img">
-                  </c:when>
-                  <c:otherwise>
-                    <img src="${pageContext.request.contextPath}/assets/images/profile_pic.png" alt="Profile" class="profile-img">
-                  </c:otherwise>
-                </c:choose>
+                <img src="${pageContext.request.contextPath}/${not empty sessionScope.user.profileImage ? sessionScope.user.profileImage : 'images/default-user.jpg'}?v=${System.currentTimeMillis()}" alt="Profile" class="profile-img">
                 <div class="profile-menu">
                   <a href="${pageContext.request.contextPath}/client/my-appointments">My Appointments</a>
                   <a href="${pageContext.request.contextPath}/client/my-profile">My Profile</a>
@@ -65,10 +58,13 @@
     <div class="profile-pic-container">
       <div class="info-heading">Profile Picture</div>
       <div class="profile-pic-wrapper view-mode">
-        <img src="${pageContext.request.contextPath}/${not empty user.profileImage ? user.profileImage : 'assets/images/profile_pic.png'}" alt="Profile Picture" class="profile-pic-large" id="profilePicDisplay">
+        <img src="${pageContext.request.contextPath}/${not empty user.profileImage ? user.profileImage : 'images/default-user.jpg'}?v=${System.currentTimeMillis()}" alt="Profile Picture" class="profile-pic-large" id="profilePicDisplay">
+        <label class="profile-pic-overlay" for="profilePicture">
+          <i class="fas fa-camera"></i> Change Photo
+        </label>
       </div>
       <div class="profile-pic-edit edit-mode" style="display: none;">
-        <input type="file" name="profilePicture" id="profilePicture" accept="image/jpeg,image/png">
+        <input type="file" name="profilePicture" id="profilePicture" accept="image/*">
         <p>Accepted formats: JPEG, PNG (Max size: 10MB)</p>
         <div class="image-preview" id="imagePreview" style="display: none;">
           <img id="previewImage" alt="Image Preview" class="profile-pic-large">
@@ -344,21 +340,28 @@
         messageDiv.textContent = result.message;
         messageContainer.appendChild(messageDiv);
 
-        viewElements.forEach(el => el.style.display = 'block');
-        editElements.forEach(el => el.style.display = 'none');
-        editBtn.style.display = 'inline-block';
-        saveBtn.style.display = 'none';
-        cancelBtn.style.display = 'none';
-
         if (result.success) {
+          viewElements.forEach(el => el.style.display = 'block');
+          editElements.forEach(el => el.style.display = 'none');
+          editBtn.style.display = 'inline-block';
+          saveBtn.style.display = 'none';
+          cancelBtn.style.display = 'none';
+
           userNameDisplay.textContent = result.user.fullName;
           genderDisplay.textContent = result.user.gender;
           emailDisplay.textContent = result.user.email;
           phoneDisplay.textContent = result.user.phone;
           addressDisplay.textContent = result.user.address;
           dateOfBirthDisplay.textContent = result.user.dateOfBirth || '';
-          profilePicDisplay.src = result.user.profileImage ? '${pageContext.request.contextPath}/' + result.user.profileImage : '${pageContext.request.contextPath}/assets/images/profile_pic.png';
-          document.querySelector('header .profile-img').src = profilePicDisplay.src;
+
+          // Fixed image update logic
+          if (result.user.profileImage) {
+            profilePicDisplay.src = '${pageContext.request.contextPath}/' + result.user.profileImage + '?v=' + new Date().getTime();
+            document.querySelector('header .profile-img').src = '${pageContext.request.contextPath}/' + result.user.profileImage + '?v=' + new Date().getTime();
+          } else {
+            profilePicDisplay.src = '${pageContext.request.contextPath}/images/default-user.jpg';
+            document.querySelector('header .profile-img').src = '${pageContext.request.contextPath}/images/default-user.jpg';
+          }
 
           profileForm.reset();
           profilePictureInput.value = '';

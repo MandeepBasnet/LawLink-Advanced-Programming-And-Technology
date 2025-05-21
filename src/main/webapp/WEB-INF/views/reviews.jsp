@@ -16,9 +16,7 @@
   <h1 class="review-title">Submit Your Review</h1>
 
   <div class="appointment-section">
-    <img src="${pageContext.request.contextPath}/assets/images/${appointment.lawyer.profileImage}" alt="Lawyer"
-         class="lawyer-image"
-         onerror="this.src='${pageContext.request.contextPath}/assets/images/profile_pic.png'">
+    <img src="${pageContext.request.contextPath}/${appointment.lawyer.profileImage != null ? appointment.lawyer.profileImage : 'assets/images/profile_pic.png'}?v=${System.currentTimeMillis()}" alt="Lawyer" class="lawyer-image">
 
     <div class="appointment-details">
       <h2 class="appointment-title">Your Appointment</h2>

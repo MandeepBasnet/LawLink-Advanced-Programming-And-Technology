@@ -5,8 +5,6 @@ import model.Lawyer;
 import util.PasswordUtil;
 import util.StringUtil;
 import util.ValidationUtil;
-import util.FileStorageUtil;
-import util.ImageUtil;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -14,15 +12,22 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.math.BigDecimal;
 
 @WebServlet("/admin/admin-add-lawyer")
-@MultipartConfig
+@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, // 2MB
+        maxFileSize = 1024 * 1024 * 10,      // 10MB
+        maxRequestSize = 1024 * 1024 * 50)   // 50MB
 public class AdminAddLawyerServlet extends HttpServlet {
     private static final Logger logger = Logger.getLogger(AdminAddLawyerServlet.class.getName());
     private LawyerDAO lawyerDAO;
+    private static final String UPLOAD_DIR = "uploads/users";
 
     @Override
     public void init() throws ServletException {
@@ -109,13 +114,35 @@ public class AdminAddLawyerServlet extends HttpServlet {
             // Handle file upload
             String profileImage = null;
             if (lawyerImagePart != null && lawyerImagePart.getSize() > 0) {
-                try {
-                    profileImage = ImageUtil.resizeAndSaveProfileImage(lawyerImagePart, 0, getServletContext()); // Temporary save with userId=0
-                } catch (IOException e) {
-                    logger.severe("Failed to process lawyer image: " + e.getMessage());
-                    request.setAttribute("error", "Failed to upload lawyer image.");
+                // Validate file type
+                String contentType = lawyerImagePart.getContentType();
+                if (!contentType.equals("image/jpeg") && !contentType.equals("image/png")) {
+                    logger.warning("Invalid file type: " + contentType);
+                    request.setAttribute("error", "Only JPEG or PNG images are allowed.");
                     request.getRequestDispatcher("/WEB-INF/views/admin/adminAddLawyers.jsp").forward(request, response);
                     return;
+                }
+
+                // Generate unique filename
+                String fileName = getSubmittedFileName(lawyerImagePart);
+                if (fileName != null && !fileName.isEmpty()) {
+                    String extension = fileName.substring(fileName.lastIndexOf("."));
+                    String uniqueFileName = UUID.randomUUID().toString() + extension;
+                    String uploadPath = getServletContext().getRealPath("") + java.io.File.separator + UPLOAD_DIR;
+                    java.io.File uploadDir = new java.io.File(uploadPath);
+                    if (!uploadDir.exists()) {
+                        uploadDir.mkdirs();
+                    }
+                    try {
+                        Files.copy(lawyerImagePart.getInputStream(), Paths.get(uploadPath, uniqueFileName), StandardCopyOption.REPLACE_EXISTING);
+                        profileImage = UPLOAD_DIR + "/" + uniqueFileName;
+                        logger.info("New profile image saved: " + profileImage);
+                    } catch (IOException e) {
+                        logger.severe("Failed to save image: " + e.getMessage());
+                        request.setAttribute("error", "Failed to upload lawyer image.");
+                        request.getRequestDispatcher("/WEB-INF/views/admin/adminAddLawyers.jsp").forward(request, response);
+                        return;
+                    }
                 }
             }
 
@@ -145,21 +172,21 @@ public class AdminAddLawyerServlet extends HttpServlet {
             // Save to database
             boolean created = lawyerDAO.createLawyer(lawyer);
 
-            if (created && profileImage != null) {
-                // Update profile image with correct userId
-                String finalProfileImage = ImageUtil.resizeAndSaveProfileImage(lawyerImagePart, lawyer.getUserId(), getServletContext());
-                lawyer.setProfileImage(finalProfileImage);
-                lawyerDAO.updateLawyer(lawyer);
-                FileStorageUtil.deleteProfileImage(profileImage, getServletContext()); // Delete temporary image
+            if (!created && profileImage != null) {
+                // Clean up image on failure
+                String uploadPath = getServletContext().getRealPath("") + java.io.File.separator + profileImage;
+                try {
+                    Files.deleteIfExists(Paths.get(uploadPath));
+                    logger.info("Cleaned up profile image: " + profileImage);
+                } catch (IOException e) {
+                    logger.warning("Failed to clean up profile image: " + profileImage);
+                }
             }
 
             if (created) {
                 request.setAttribute("success", "Lawyer added successfully!");
             } else {
                 request.setAttribute("error", "Failed to add lawyer. Try again.");
-                if (profileImage != null) {
-                    FileStorageUtil.deleteProfileImage(profileImage, getServletContext()); // Cleanup on failure
-                }
             }
 
             request.getRequestDispatcher("/WEB-INF/views/admin/adminAddLawyers.jsp").forward(request, response);
@@ -175,5 +202,14 @@ public class AdminAddLawyerServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.getRequestDispatcher("/WEB-INF/views/admin/adminAddLawyers.jsp").forward(request, response);
+    }
+
+    private String getSubmittedFileName(Part part) {
+        for (String content : part.getHeader("content-disposition").split(";")) {
+            if (content.trim().startsWith("filename")) {
+                return content.substring(content.indexOf('=') + 1).trim().replace("\"", "");
+            }
+        }
+        return null;
     }
 }

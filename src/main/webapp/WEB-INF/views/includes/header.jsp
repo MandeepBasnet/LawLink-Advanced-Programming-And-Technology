@@ -22,10 +22,10 @@
                             <div class="profile">
                                 <c:choose>
                                     <c:when test="${not empty sessionScope.user.profileImage}">
-                                        <img src="${pageContext.request.contextPath}/${sessionScope.user.profileImage}" alt="Profile" class="profile-img">
+                                        <img src="${pageContext.request.contextPath}/${sessionScope.user.profileImage}?v=${System.currentTimeMillis()}" alt="Profile" class="profile-img">
                                     </c:when>
                                     <c:otherwise>
-                                        <img src="${pageContext.request.contextPath}/assets/images/profile_pic.png" alt="Profile" class="profile-img">
+                                        <img src="${pageContext.request.contextPath}/images/default-user.jpg" alt="Profile" class="profile-img">
                                     </c:otherwise>
                                 </c:choose>
                                 <div class="profile-menu">

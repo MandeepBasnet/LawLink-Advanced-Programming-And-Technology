@@ -13,13 +13,18 @@ import jakarta.servlet.http.Part;
 
 public class FileStorageUtil {
 
-    private static final String UPLOAD_DIR = "assets/uploads";
+    private static final String UPLOAD_DIR = "uploads/users";
 
     public static String saveProfileImage(Part part, int userId, ServletContext servletContext) throws IOException {
         String uploadDir = getBaseUploadDirectory(servletContext);
         createDirectoryIfNotExists(uploadDir);
-        String fileName = userId + "_" + UUID.randomUUID().toString() + getFileExtension(part);
-        Path filePath = Paths.get(uploadDir, fileName);
+        String fileName = getSubmittedFileName(part);
+        if (fileName == null || fileName.isEmpty()) {
+            throw new IOException("Invalid file name.");
+        }
+        String extension = fileName.substring(fileName.lastIndexOf("."));
+        String uniqueFileName = UUID.randomUUID().toString() + extension;
+        Path filePath = Paths.get(uploadDir, uniqueFileName);
         System.out.println("Attempting to save profile image to: " + filePath);
         try {
             Files.copy(part.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
@@ -28,7 +33,7 @@ public class FileStorageUtil {
             System.err.println("Failed to save profile image to " + filePath + ": " + e.getMessage());
             throw e;
         }
-        String relativePath = UPLOAD_DIR + "/" + fileName;
+        String relativePath = UPLOAD_DIR + "/" + uniqueFileName;
         System.out.println("Returning relative path: " + relativePath);
         return relativePath;
     }
@@ -39,9 +44,11 @@ public class FileStorageUtil {
             return false;
         }
         String baseDir = getBaseUploadDirectory(servletContext);
-        // Remove leading "assets/uploads/" to avoid duplication
-        String cleanPath = relativePath.replaceFirst("^/?assets/uploads/", "");
-        Path filePath = Paths.get(baseDir, cleanPath.replace("/", File.separator));
+        String normalizedPath = relativePath.replaceFirst("^/+", "").replaceFirst("/+$", "");
+        if (normalizedPath.startsWith(UPLOAD_DIR)) {
+            normalizedPath = normalizedPath.substring(UPLOAD_DIR.length() + 1);
+        }
+        Path filePath = Paths.get(baseDir, normalizedPath.replace("/", File.separator));
         System.out.println("Attempting to delete profile image: " + filePath);
         try {
             boolean deleted = Files.deleteIfExists(filePath);
@@ -75,10 +82,12 @@ public class FileStorageUtil {
         }
     }
 
-    private static String getFileExtension(Part part) {
-        String submittedFileName = part.getSubmittedFileName();
-        String extension = submittedFileName.substring(submittedFileName.lastIndexOf("."));
-        System.out.println("File extension: " + extension);
-        return extension;
+    private static String getSubmittedFileName(Part part) {
+        for (String content : part.getHeader("content-disposition").split(";")) {
+            if (content.trim().startsWith("filename")) {
+                return content.substring(content.indexOf('=') + 1).trim().replace("\"", "");
+            }
+        }
+        return null;
     }
 }

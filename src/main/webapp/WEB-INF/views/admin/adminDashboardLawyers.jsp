@@ -61,7 +61,7 @@
                     <tr>
                         <td><c:out value="${loop.count}" /></td>
                         <td>
-                            <img src="${pageContext.request.contextPath}/${empty lawyer.profileImage ? 'assets/images/default.png' : lawyer.profileImage}" alt="<c:out value='${lawyer.fullName}' />" class="lawyer-avatar">
+                            <img src="${pageContext.request.contextPath}/${empty lawyer.profileImage ? 'assets/images/default.png' : lawyer.profileImage}?v=${System.currentTimeMillis()}" alt="<c:out value='${lawyer.fullName}' />" class="lawyer-avatar">
                             <c:out value="${lawyer.fullName}" />
                         </td>
                         <td><c:out value="${lawyer.practiceAreas}" default="${lawyer.specialization}" /></td>

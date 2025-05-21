@@ -1,4 +1,3 @@
-```jsp
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
@@ -6,155 +5,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - LawLink</title>
+    <title>My Profile - LawLink</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/lawyerStyle.css">
 </head>
 <body>
-<!-- Navigation Bar -->
-<jsp:include page="common/header.jsp" />
+<jsp:include page="/WEB-INF/views/lawyer/common/header.jsp">
+    <jsp:param name="pageTitle" value="My Profile"/>
+</jsp:include>
 
-<!-- Sidebar and Main Content -->
 <div class="main-container">
-    <jsp:include page="common/sidebar.jsp">
-        <jsp:param name="activePage" value="profile" />
+    <jsp:include page="/WEB-INF/views/lawyer/common/sidebar.jsp">
+        <jsp:param name="pageTitle" value="My Profile"/>
     </jsp:include>
 
-    <!-- Main Content -->
     <div class="main-content">
-        <div class="container">
-            <h1>My Profile</h1>
+    <h1>My Profile</h1>
 
-            <!-- Success/Error Messages -->
-            <div id="messageContainer">
-                <c:if test="${not empty successMessage}">
-                    <div class="success-message"><c:out value="${successMessage}"/></div>
-                </c:if>
-                <c:if test="${not empty errorMessage}">
-                    <div class="error-message"><c:out value="${errorMessage}"/></div>
-                </c:if>
+    <div id="messageContainer"></div>
+
+    <form id="profileForm" enctype="multipart/form-data">
+        <div class="profile-pic-container">
+            <div class="info-heading">Profile Picture</div>
+            <div class="profile-pic-wrapper view-mode">
+                <img src="${pageContext.request.contextPath}/${not empty lawyer.profileImage ? lawyer.profileImage : 'images/default-user.jpg'}?v=${System.currentTimeMillis()}" alt="Profile Picture" class="profile-pic-large" id="profilePicDisplay">
+                <label class="profile-pic-overlay" for="profilePicture">
+                    <i class="fas fa-camera"></i> Change Photo
+                </label>
+            </div>
+            <div class="profile-pic-edit edit-mode" style="display: none;">
+                <input type="file" name="profilePicture" id="profilePicture" accept="image/jpeg,image/png">
+                <p>Accepted formats: JPEG, PNG (Max size: 10MB)</p>
+                <div class="image-preview" id="imagePreview" style="display: none;">
+                    <img id="previewImage" alt="Image Preview" class="profile-pic-large">
+                </div>
+                <div class="error-text" id="profilePictureError"></div>
+            </div>
+        </div>
+
+        <div class="info-item">
+            <div class="info-label">Full Name:</div>
+            <div class="info-value view-mode" id="userName"><c:out value="${lawyer.fullName}"/></div>
+            <div class="info-edit edit-mode" style="display: none;">
+                <input type="text" name="fullName" id="fullName" value="${lawyer.fullName}" required>
+                <div class="error-text" id="fullNameError"></div>
+            </div>
+        </div>
+
+        <div class="info-container">
+            <div class="info-column">
+                <div class="info-heading">Basic Information</div>
+
+                <div class="info-item">
+                    <div class="info-label">Username:</div>
+                    <div class="info-value"><c:out value="${lawyer.username}"/></div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Gender:</div>
+                    <div class="info-value view-mode" id="genderDisplay"><c:out value="${lawyer.gender}"/></div>
+                    <div class="info-edit edit-mode" style="display: none;">
+                        <select name="gender" id="gender" required>
+                            <option value="Male" ${lawyer.gender == 'Male' ? 'selected' : ''}>Male</option>
+                            <option value="Female" ${lawyer.gender == 'Female' ? 'selected' : ''}>Female</option>
+                            <option value="Other" ${lawyer.gender == 'Other' ? 'selected' : ''}>Other</option>
+                        </select>
+                        <div class="error-text" id="genderError"></div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Date of Birth:</div>
+                    <div class="info-value view-mode" id="dateOfBirthDisplay"><c:out value="${lawyer.dateOfBirth}"/></div>
+                    <div class="info-edit edit-mode" style="display: none;">
+                        <input type="date" name="dateOfBirth" id="dateOfBirth" value="${lawyer.dateOfBirth}">
+                        <div class="error-text" id="dateOfBirthError"></div>
+                    </div>
+                </div>
             </div>
 
-            <form id="profileForm" enctype="multipart/form-data">
-                <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                    <tr>
-                        <td align="center" valign="top">
-                            <div class="profile-picture-label">Profile Picture</div>
-                            <div class="profile-pic-wrapper view-mode">
-                                <img src="${pageContext.request.contextPath}/assets/images/${not empty lawyer.profileImage ? lawyer.profileImage : 'default.png'}" alt="Profile Picture" class="profile-picture" id="profilePicDisplay" style="width: 80px; height: 80px;">
-                            </div>
-                            <div class="profile-pic-edit edit-mode" style="display: none;">
-                                <input type="file" name="profilePicture" id="profilePicture" accept="image/jpeg,image/png">
-                                <p>Accepted formats: JPEG, PNG (Max size: 10MB)</p>
-                                <div class="image-preview" id="imagePreview" style="display: none;">
-                                    <img id="previewImage" alt="Image Preview" class="profile-pic-large" style="width: 80px; height: 80px;">
-                                </div>
-                                <div class="error-text" id="profilePictureError"></div>
-                            </div>
-                            <div class="profile-row view-mode" style="justify-content: center; margin-top: 10px;">
-                                <div class="profile-value" id="userName" style="font-weight: bold;"><c:out value="${lawyer.fullName}"/></div>
-                            </div>
-                            <div class="info-edit edit-mode" style="display: none; text-align: center; margin-top: 10px;">
-                                <input type="text" name="fullName" id="fullName" value="${lawyer.fullName}" required style="width: 200px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                <div class="error-text" id="fullNameError"></div>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+            <div class="info-column">
+                <div class="info-heading">Contact Information</div>
 
-                <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 20px; border-top: 1px solid #ddd;">
-                    <tr>
-                        <td width="50%" valign="top" style="padding-top: 15px; padding-right: 15px; border-right: 1px solid #ddd;">
-                            <div class="column-heading">Basic Information</div>
-
-                            <div class="profile-row" style="align-items: center;">
-                                <div class="profile-label" style="font-weight: bold; width: 120px;">Username:</div>
-                                <div class="info-value"><c:out value="${lawyer.username}" default="N/A" /></div>
-                            </div>
-
-                            <div class="profile-row" style="align-items: center;">
-                                <div class="profile-label" style="font-weight: bold; width: 120px;">Gender:</div>
-                                <div class="info-value view-mode" id="genderDisplay"><c:out value="${lawyer.gender}" default="N/A" /></div>
-                                <div class="info-edit edit-mode" style="display: none;">
-                                    <select name="gender" id="gender" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                        <option value="Male" ${lawyer.gender == 'Male' ? 'selected' : ''}>Male</option>
-                                        <option value="Female" ${lawyer.gender == 'Female' ? 'selected' : ''}>Female</option>
-                                        <option value="Other" ${lawyer.gender == 'Other' ? 'selected' : ''}>Other</option>
-                                    </select>
-                                    <div class="error-text" id="genderError"></div>
-                                </div>
-                            </div>
-
-                            <div class="profile-row" style="align-items: center;">
-                                <div class="profile-label" style="font-weight: bold; width: 120px;">Date of Birth:</div>
-                                <div class="info-value view-mode" id="dateOfBirthDisplay"><c:out value="${lawyer.dateOfBirth != null ? lawyer.dateOfBirth : 'N/A'}" /></div>
-                                <div class="info-edit edit-mode" style="display: none;">
-                                    <input type="date" name="dateOfBirth" id="dateOfBirth" value="${lawyer.dateOfBirth}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                    <div class="error-text" id="dateOfBirthError"></div>
-                                </div>
-                            </div>
-                        </td>
-
-                        <td width="50%" valign="top" style="padding-top: 15px; padding-left: 15px;">
-                            <div class="column-heading">Contact Information</div>
-
-                            <div class="profile-row" style="align-items: center;">
-                                <div class="profile-label" style="font-weight: bold; width: 120px;">Email:</div>
-                                <div class="info-value view-mode" id="emailDisplay"><c:out value="${lawyer.email}" default="N/A" /></div>
-                                <div class="info-edit edit-mode" style="display: none;">
-                                    <input type="email" name="email" id="email" value="${lawyer.email}" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                    <div class="error-text" id="emailError"></div>
-                                </div>
-                            </div>
-
-                            <div class="profile-row" style="align-items: center;">
-                                <div class="profile-label" style="font-weight: bold; width: 120px;">Phone:</div>
-                                <div class="info-value view-mode" id="phoneDisplay"><c:out value="${lawyer.phone}" default="N/A" /></div>
-                                <div class="info-edit edit-mode" style="display: none;">
-                                    <input type="text" name="phone" id="phone" value="${lawyer.phone}" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                    <div class="error-text" id="phoneError"></div>
-                                </div>
-                            </div>
-
-                            <div class="profile-row" style="align-items: center;">
-                                <div class="profile-label" style="font-weight: bold; width: 120px;">Address:</div>
-                                <div class="info-value view-mode" id="addressDisplay"><c:out value="${lawyer.address}" default="N/A" /></div>
-                                <div class="info-edit edit-mode" style="display: none;">
-                                    <input type="text" name="address" id="address" value="${lawyer.address}" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                                    <div class="error-text" id="addressError"></div>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
-
-                <div class="button-group" style="margin-top: 20px;">
-                    <button type="button" id="editProfileBtn" class="btn btn-edit">Edit Profile</button>
-                    <button type="submit" id="saveProfileBtn" class="btn btn-save" style="display: none;">Save Changes</button>
-                    <button type="button" id="cancelEditBtn" class="btn btn-cancel" style="display: none;">Cancel</button>
-                    <div class="spinner" id="spinner" style="display: none;">Saving...</div>
+                <div class="info-item">
+                    <div class="info-label">Email:</div>
+                    <div class="info-value view-mode" id="emailDisplay"><c:out value="${lawyer.email}"/></div>
+                    <div class="info-edit edit-mode" style="display: none;">
+                        <input type="email" name="email" id="email" value="${lawyer.email}" required>
+                        <div class="error-text" id="emailError"></div>
+                    </div>
                 </div>
-            </form>
+
+                <div class="info-item">
+                    <div class="info-label">Phone:</div>
+                    <div class="info-value view-mode" id="phoneDisplay"><c:out value="${lawyer.phone}"/></div>
+                    <div class="info-edit edit-mode" style="display: none;">
+                        <input type="text" name="phone" id="phone" value="${lawyer.phone}" required>
+                        <div class="error-text" id="phoneError"></div>
+                    </div>
+                </div>
+
+                <div class="info-item">
+                    <div class="info-label">Address:</div>
+                    <div class="info-value view-mode" id="addressDisplay"><c:out value="${lawyer.address}"/></div>
+                    <div class="info-edit edit-mode" style="display: none;">
+                        <input type="text" name="address" id="address" value="${lawyer.address}" required>
+                        <div class="error-text" id="addressError"></div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="button-group">
+            <button type="button" id="editProfileBtn" class="btn btn-edit">Edit Profile</button>
+            <button type="submit" id="saveProfileBtn" class="btn btn-save" style="display: none;">Save Changes</button>
+            <button type="button" id="cancelEditBtn" class="btn btn-cancel" style="display: none;">Cancel</button>
+            <div class="spinner" id="spinner" style="display: none;">Saving...</div>
+        </div>
+        </form>
     </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Toggle profile menu on click for mobile devices
-        const profile = document.querySelector('.profile');
-        const profileImg = document.querySelector('.profile-img');
-        if (profile && profileImg) {
-            profileImg.addEventListener('click', () => {
-                profile.classList.toggle('active');
-            });
-            document.addEventListener('click', (e) => {
-                if (!profile.contains(e.target)) {
-                    profile.classList.remove('active');
-                }
-            });
-        }
-
-        // Profile form handling
         const editBtn = document.getElementById('editProfileBtn');
         const saveBtn = document.getElementById('saveProfileBtn');
         const cancelBtn = document.getElementById('cancelEditBtn');
@@ -260,7 +232,6 @@
             addressError.textContent = '';
             genderError.textContent = '';
             dateOfBirthError.textContent = '';
-            profilePictureError.textContent = '';
 
             if (!fullNameInput.value.trim()) {
                 fullNameError.textContent = 'Full name is required.';
@@ -306,21 +277,16 @@
             saveBtn.disabled = true;
 
             try {
+                const formData = new FormData(profileForm);
                 const response = await fetch('${pageContext.request.contextPath}/lawyer/lawyer-profile', {
                     method: 'POST',
-                    body: new FormData(profileForm),
+                    body: formData,
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
 
-                // Check if response is OK (status 200-299)
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
                 const result = await response.json();
-                console.log('Server response:', result);
                 spinner.style.display = 'none';
                 saveBtn.disabled = false;
 
@@ -330,31 +296,30 @@
                 messageContainer.appendChild(messageDiv);
 
                 if (result.success) {
-                    // Update displayed values
-                    userNameDisplay.textContent = result.lawyer.fullName;
-                    genderDisplay.textContent = result.lawyer.gender;
-                    emailDisplay.textContent = result.lawyer.email;
-                    phoneDisplay.textContent = result.lawyer.phone;
-                    addressDisplay.textContent = result.lawyer.address;
-                    dateOfBirthDisplay.textContent = result.lawyer.dateOfBirth || 'N/A';
-                    profilePicDisplay.src = result.lawyer.profileImage ? '${pageContext.request.contextPath}/assets/images/' + result.lawyer.profileImage : '${pageContext.request.contextPath}/assets/images/default.png';
-
-                    document.querySelector('header .profile-img').src = profilePicDisplay.src;
-
-                    // Reset form and UI
-                    profileForm.reset();
-                    profilePictureInput.value = '';
-                    imagePreview.style.display = 'none';
                     viewElements.forEach(el => el.style.display = 'block');
                     editElements.forEach(el => el.style.display = 'none');
                     editBtn.style.display = 'inline-block';
                     saveBtn.style.display = 'none';
                     cancelBtn.style.display = 'none';
 
-                    // Reload page after a short delay to ensure UI updates
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
+                    userNameDisplay.textContent = result.lawyer.fullName;
+                    genderDisplay.textContent = result.lawyer.gender;
+                    emailDisplay.textContent = result.lawyer.email;
+                    phoneDisplay.textContent = result.lawyer.phone;
+                    addressDisplay.textContent = result.lawyer.address;
+                    dateOfBirthDisplay.textContent = result.lawyer.dateOfBirth || '';
+
+                    if (result.lawyer.profileImage) {
+                        profilePicDisplay.src = '${pageContext.request.contextPath}/' + result.lawyer.profileImage + '?v=' + new Date().getTime();
+                        document.querySelector('.user-avatar').src = '${pageContext.request.contextPath}/' + result.lawyer.profileImage + '?v=' + new Date().getTime();
+                    } else {
+                        profilePicDisplay.src = '${pageContext.request.contextPath}/images/default-user.jpg';
+                        document.querySelector('.user-avatar').src = '${pageContext.request.contextPath}/images/default-user.jpg';
+                    }
+
+                    profileForm.reset();
+                    profilePictureInput.value = '';
+                    imagePreview.style.display = 'none';
                 }
             } catch (error) {
                 console.error('Form submission error:', error);
@@ -362,7 +327,7 @@
                 saveBtn.disabled = false;
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'error-message';
-                messageDiv.textContent = 'An error occurred while saving your profile. Please try again.';
+                messageDiv.textContent = 'An error occurred while saving your profile.';
                 messageContainer.appendChild(messageDiv);
 
                 viewElements.forEach(el => el.style.display = 'block');
@@ -376,4 +341,3 @@
 </script>
 </body>
 </html>
-```
