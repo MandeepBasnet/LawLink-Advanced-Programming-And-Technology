@@ -11,17 +11,26 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.*;
-import java.sql.Date;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import com.google.gson.Gson;
 import util.DBConnectionUtil;
 
-@WebServlet({"/client/book-appointment-page", "/client/book-appointment"})
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Text;
+import com.itextpdf.layout.properties.TextAlignment;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+@WebServlet({"/client/book-appointment-page", "/client/book-appointment", "/client/download-receipt"})
 public class BookAppointmentServlet extends HttpServlet {
     private AppointmentDAO appointmentDAO;
     private LawyerDAO lawyerDAO;
@@ -40,6 +49,12 @@ public class BookAppointmentServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String servletPath = request.getServletPath();
+        if ("/client/download-receipt".equals(servletPath)) {
+            handleDownloadReceipt(request, response);
+            return;
+        }
+
         String action = request.getParameter("action");
         if ("getTimeSlots".equals(action)) {
             handleTimeSlotsRequest(request, response);
@@ -106,9 +121,10 @@ public class BookAppointmentServlet extends HttpServlet {
             // Validate date format
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             dateFormat.setLenient(false);
-            Date date;
+            java.sql.Date sqlDate;
             try {
-                date = new Date(dateFormat.parse(dateStr).getTime());
+                java.util.Date utilDate = dateFormat.parse(dateStr);
+                sqlDate = new java.sql.Date(utilDate.getTime());
             } catch (Exception e) {
                 request.setAttribute("error", "Invalid date format.");
                 doGet(request, response);
@@ -118,9 +134,10 @@ public class BookAppointmentServlet extends HttpServlet {
             // Validate time format
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
             timeFormat.setLenient(false);
-            Time time;
+            Time sqlTime;
             try {
-                time = new Time(timeFormat.parse(timeStr).getTime());
+                java.util.Date utilTime = timeFormat.parse(timeStr);
+                sqlTime = new Time(utilTime.getTime());
             } catch (Exception e) {
                 request.setAttribute("error", "Invalid time format.");
                 doGet(request, response);
@@ -135,7 +152,7 @@ public class BookAppointmentServlet extends HttpServlet {
             }
 
             // Verify lawyer availability
-            if (!appointmentDAO.isLawyerAvailable(lawyerId, date, time)) {
+            if (!appointmentDAO.isLawyerAvailable(lawyerId, sqlDate, sqlTime)) {
                 request.setAttribute("error", "Selected time slot is not available.");
                 doGet(request, response);
                 return;
@@ -143,8 +160,8 @@ public class BookAppointmentServlet extends HttpServlet {
 
             // Check LawyerAvailability for the day of the week
             Calendar calendar = Calendar.getInstance();
-            calendar.setTime(date);
-            String dayOfWeek = new SimpleDateFormat("EEEE").format(date).toUpperCase();
+            calendar.setTime(sqlDate);
+            String dayOfWeek = new SimpleDateFormat("EEEE").format(sqlDate).toUpperCase();
             String availabilitySql = "SELECT is_available FROM LawyerAvailability WHERE lawyer_id = ? AND day_of_week = ?";
             try (Connection conn = DBConnectionUtil.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(availabilitySql)) {
@@ -166,8 +183,8 @@ public class BookAppointmentServlet extends HttpServlet {
             Appointment appointment = new Appointment();
             appointment.setLawyerId(lawyerId);
             appointment.setClientId(user.getUserId());
-            appointment.setAppointmentDate(date);
-            appointment.setAppointmentTime(time);
+            appointment.setAppointmentDate(sqlDate);
+            appointment.setAppointmentTime(sqlTime);
             appointment.setDuration(duration);
             appointment.setNotes(notes);
             appointment.setStatus("PENDING");
@@ -175,8 +192,22 @@ public class BookAppointmentServlet extends HttpServlet {
             boolean success = appointmentDAO.createAppointment(appointment);
 
             if (success) {
-                request.setAttribute("success", "Appointment booked successfully!");
-                response.sendRedirect(request.getContextPath() + "/client/my-appointments");
+                // Fetch the lawyer details for the PDF
+                Lawyer lawyer = lawyerDAO.getLawyerById(lawyerId);
+                if (lawyer == null) {
+                    request.setAttribute("error", "Failed to retrieve lawyer details for receipt.");
+                    doGet(request, response);
+                    return;
+                }
+
+                // Generate PDF and store in session
+                ByteArrayOutputStream pdfStream = generateReceiptPDF(appointment, lawyer, clientName, clientPhone);
+                session.setAttribute("receipt_" + appointment.getAppointmentId(), pdfStream.toByteArray());
+
+                // Set success message and appointment ID for JSP
+                request.setAttribute("success", "Appointment booked successfully! Your receipt is being downloaded.");
+                request.setAttribute("appointmentId", appointment.getAppointmentId());
+                doGet(request, response);
             } else {
                 request.setAttribute("error", "Failed to book appointment.");
                 doGet(request, response);
@@ -191,17 +222,100 @@ public class BookAppointmentServlet extends HttpServlet {
         }
     }
 
+    private ByteArrayOutputStream generateReceiptPDF(Appointment appointment, Lawyer lawyer, String clientName, String clientPhone) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (PdfWriter writer = new PdfWriter(baos);
+             PdfDocument pdf = new PdfDocument(writer);
+             Document document = new Document(pdf)) {
+
+            // Add title
+            document.add(new Paragraph("Appointment Receipt")
+                    .setFontSize(20)
+                    .setBold()
+                    .setTextAlignment(TextAlignment.CENTER));
+
+            // Add timestamp
+            LocalDateTime now = LocalDateTime.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy HH:mm:ss");
+            document.add(new Paragraph("Generated on: " + now.format(formatter))
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setFontSize(12));
+
+            // Add a blank line
+            document.add(new Paragraph(""));
+
+            // Appointment Details
+            document.add(new Paragraph("Appointment Details").setFontSize(16).setBold());
+            document.add(new Paragraph("Appointment ID: " + appointment.getAppointmentId()));
+            document.add(new Paragraph("Date: " + appointment.getAppointmentDate()));
+            document.add(new Paragraph("Time: " + appointment.getAppointmentTime()));
+            document.add(new Paragraph("Duration: " + appointment.getDuration() + " minutes"));
+            document.add(new Paragraph("Status: " + appointment.getStatus()));
+            document.add(new Paragraph("Notes: " + (appointment.getNotes() != null ? appointment.getNotes() : "None")));
+
+            // Add a blank line
+            document.add(new Paragraph(""));
+
+            // Lawyer Details
+            document.add(new Paragraph("Lawyer Details").setFontSize(16).setBold());
+            document.add(new Paragraph("Name: " + lawyer.getFullName()));
+            document.add(new Paragraph("Specialization: " + lawyer.getSpecialization()));
+            document.add(new Paragraph("Consultation Fee: $" + lawyer.getConsultationFee()));
+            document.add(new Paragraph("Phone: " + (lawyer.getPhone() != null ? lawyer.getPhone() : "Not provided")));
+
+            // Add a blank line
+            document.add(new Paragraph(""));
+
+            // Client Details
+            document.add(new Paragraph("Client Details").setFontSize(16).setBold());
+            document.add(new Paragraph("Name: " + clientName));
+            document.add(new Paragraph("Phone: " + clientPhone));
+
+            // Add a footer
+            document.add(new Paragraph("Thank you for booking with Law Link!")
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setFontSize(12)
+                    .setMarginTop(20));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new IOException("Error generating PDF receipt: " + e.getMessage());
+        }
+        return baos;
+    }
+
+    private void handleDownloadReceipt(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HttpSession session = request.getSession(false);
+        String appointmentId = request.getParameter("appointmentId");
+        byte[] pdfBytes = (byte[]) session.getAttribute("receipt_" + appointmentId);
+
+        if (pdfBytes == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.getWriter().write("Receipt not found.");
+            return;
+        }
+
+        // Set response headers for PDF download
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition", "attachment; filename=appointment_receipt_" + appointmentId + ".pdf");
+        response.getOutputStream().write(pdfBytes);
+        response.getOutputStream().flush();
+
+        // Clean up session
+        session.removeAttribute("receipt_" + appointmentId);
+    }
+
     private void handleTimeSlotsRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
             int lawyerId = Integer.parseInt(request.getParameter("lawyerId"));
             String dateStr = request.getParameter("date");
-            Date date = Date.valueOf(dateStr);
+            java.sql.Date sqlDate = java.sql.Date.valueOf(dateStr);
 
             List<Appointment> appointments = appointmentDAO.getAppointmentsByLawyer(lawyerId);
             List<String> bookedSlots = new ArrayList<>();
 
             for (Appointment appt : appointments) {
-                if (appt.getAppointmentDate().equals(date) && !appt.getStatus().equals("CANCELLED")) {
+                if (appt.getAppointmentDate().equals(sqlDate) && !appt.getStatus().equals("CANCELLED")) {
                     bookedSlots.add(appt.getAppointmentTime().toString().substring(0, 5));
                 }
             }

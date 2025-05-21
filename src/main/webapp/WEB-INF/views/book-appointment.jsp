@@ -20,7 +20,7 @@
             <div class="alert alert-danger">${error}</div>
         </c:if>
         <c:if test="${not empty success}">
-            <div class="alert alert-success">${success}</div>
+            <div class="alert alert-success" id="successMessage">${success}</div>
         </c:if>
         <div class="appointment-layout">
             <!-- Left Column: Lawyer Profile, Appointment Form, Latest Reviews -->
@@ -345,6 +345,24 @@
 
             form.submit();
         });
+
+        // Handle success message and trigger PDF download + redirect
+        const successMessage = document.getElementById('successMessage');
+        if (successMessage && ${not empty appointmentId}) {
+            // Trigger PDF download
+            const downloadLink = '${pageContext.request.contextPath}/client/download-receipt?appointmentId=${appointmentId}';
+            const link = document.createElement('a');
+            link.href = downloadLink;
+            link.download = 'appointment_receipt_${appointmentId}.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Redirect to my-appointments after a short delay
+            setTimeout(() => {
+                window.location.href = '${pageContext.request.contextPath}/client/my-appointments';
+            }, 2000); // 2-second delay to ensure download starts
+        }
     });
 </script>
 
