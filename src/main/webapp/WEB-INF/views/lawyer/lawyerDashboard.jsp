@@ -9,6 +9,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - LawLink</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/lawyerStyle.css">
+    <style>
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .action-icon {
+            background-color: transparent;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-icon:hover {
+            background-color: transparent;
+        }
+
+        .action-btn {
+            background-color: #f5f5f5;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+            text-decoration: none;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .action-btn:hover {
+            background-color: #e0e0e0;
+        }
+    </style>
 </head>
 <body>
 <jsp:include page="common/header.jsp">
@@ -81,24 +124,34 @@
                                 </span>
                             </td>
                             <td>
-                                <c:choose>
-                                    <c:when test="${empty sessionScope.csrfToken}">
-                                        <span class="action-disabled" title="Please log in again to perform this action">Cancel</span>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <img class="action-icon cancel-icon" src="${pageContext.request.contextPath}/assets/images/cross_icon.svg" alt="Cancel" onclick="cancelAppointment(<c:out value='${appointment.appointmentId}' />, '${fn:escapeXml(sessionScope.csrfToken)}')">
-                                    </c:otherwise>
-                                </c:choose>
-                                <c:if test="${appointment.status != 'CONFIRMED'}">
+                                <div class="action-buttons">
                                     <c:choose>
                                         <c:when test="${empty sessionScope.csrfToken}">
-                                            <span class="action-disabled" title="Please log in again to perform this action">Confirm</span>
+                                            <span class="action-disabled" title="Please log in again to perform this action">Cancel</span>
                                         </c:when>
                                         <c:otherwise>
-                                            <img class="action-icon confirm-icon" src="${pageContext.request.contextPath}/assets/images/tick_icon.svg" alt="Confirm" onclick="confirmAppointment(<c:out value='${appointment.appointmentId}' />, '${fn:escapeXml(sessionScope.csrfToken)}')">
+                                            <img class="action-icon cancel-icon" src="${pageContext.request.contextPath}/assets/images/cancel_icon.svg" alt="Cancel" onclick="cancelAppointment(<c:out value='${appointment.appointmentId}' />, '${fn:escapeXml(sessionScope.csrfToken)}')">
                                         </c:otherwise>
                                     </c:choose>
-                                </c:if>
+                                    <c:if test="${appointment.status != 'CONFIRMED'}">
+                                        <c:choose>
+                                            <c:when test="${empty sessionScope.csrfToken}">
+                                                <span class="action-disabled" title="Please log in again to perform this action">Confirm</span>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <img class="action-icon confirm-icon" src="${pageContext.request.contextPath}/assets/images/tick_icon.svg" alt="Confirm" onclick="confirmAppointment(<c:out value='${appointment.appointmentId}' />, '${fn:escapeXml(sessionScope.csrfToken)}')">
+                                            </c:otherwise>
+                                        </c:choose>
+                                    </c:if>
+                                    <c:choose>
+                                        <c:when test="${empty sessionScope.csrfToken}">
+                                            <span class="action-disabled" title="Please log in again to perform this action">Complete</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <img class="action-icon complete-icon" src="${pageContext.request.contextPath}/assets/images/tick_icon.svg" alt="Complete" onclick="completeAppointment(<c:out value='${appointment.appointmentId}' />, '${fn:escapeXml(sessionScope.csrfToken)}')">
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
                             </td>
                         </tr>
                     </c:if>
@@ -207,6 +260,33 @@
             }).catch(error => {
                 console.error('Error:', error);
                 alert('An error occurred while confirming the appointment.');
+            });
+        }
+    }
+
+    function completeAppointment(appointmentId, csrfToken) {
+        if (!csrfToken) {
+            alert('Session expired or invalid. Please log in again.');
+            window.location.href = '${pageContext.request.contextPath}/log-in';
+            return;
+        }
+        if (confirm('Are you sure you want to mark this appointment as completed?')) {
+            fetch('${pageContext.request.contextPath}/lawyer/complete-appointment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'appointmentId=' + appointmentId + '&csrfToken=' + encodeURIComponent(csrfToken)
+            }).then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    return response.text().then(text => {
+                        alert('Failed to mark appointment as completed: ' + (text || 'Unknown error'));
+                        console.error('Server response:', text);
+                    });
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while marking the appointment as completed.');
             });
         }
     }

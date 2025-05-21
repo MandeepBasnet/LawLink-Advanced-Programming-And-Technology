@@ -131,7 +131,6 @@
                     <button type="button" id="editProfileBtn" class="btn btn-edit">Edit Profile</button>
                     <button type="submit" id="saveProfileBtn" class="btn btn-save" style="display: none;">Save Changes</button>
                     <button type="button" id="cancelEditBtn" class="btn btn-cancel" style="display: none;">Cancel</button>
-                    <a href="${pageContext.request.contextPath}/lawyer/change-password" class="btn btn-password">Change Password</a>
                     <div class="spinner" id="spinner" style="display: none;">Saving...</div>
                 </div>
             </form>
