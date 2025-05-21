@@ -34,11 +34,11 @@
         </div>
     </div>
     <div class="search-section">
-        <p>Search by the name of attorney and practice areas.</p>
+        <p>Search by the name of attorney or practice areas.</p>
         <form action="${pageContext.request.contextPath}/search" method="get" class="search-form">
-            <input type="text" name="query" placeholder="Search" class="search-input">
+            <input type="text" name="query" placeholder="Search by name" class="search-input">
             <select name="practiceArea" class="search-dropdown">
-                <option value="">Practice area</option>
+                <option value="">Select practice area</option>
                 <c:forEach var="practiceArea" items="${practiceAreas}">
                     <option value="${practiceArea.areaName}">${practiceArea.areaName}</option>
                 </c:forEach>
@@ -157,9 +157,10 @@
         if (searchForm) {
             searchForm.addEventListener('submit', function(e) {
                 const searchInput = document.querySelector('.search-input');
-                if (searchInput.value.trim() === '') {
+                const practiceArea = document.querySelector('.search-dropdown');
+                if (searchInput.value.trim() === '' && practiceArea.value === '') {
                     e.preventDefault();
-                    alert('Please enter a search term');
+                    alert('Please enter a search term or select a practice area');
                 }
             });
         }

@@ -286,9 +286,15 @@ FROM Appointments a
 WHERE a.status = 'COMPLETED'
 AND a.appointment_date < '2025-05-04';
 
--- Insert lawyer practice areas
+-- Insert correct LawyerPracticeAreas data based on Lawyers.practice_areas
 INSERT INTO LawyerPracticeAreas (lawyer_id, area_id)
-SELECT l.lawyer_id, p.area_id
+SELECT
+    l.lawyer_id,
+    p.area_id
 FROM Lawyers l
-CROSS JOIN PracticeAreas p
-WHERE RAND() < 0.5;
+         JOIN Users u ON l.lawyer_id = u.user_id
+         JOIN PracticeAreas p
+WHERE
+    -- Match practice_areas string with area_name
+    FIND_IN_SET(p.area_name, l.practice_areas)
+ORDER BY l.lawyer_id, p.area_id;

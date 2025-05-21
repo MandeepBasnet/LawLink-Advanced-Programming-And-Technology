@@ -239,7 +239,7 @@ public class LawyerDAO {
                 "JOIN Lawyers l ON u.user_id = l.lawyer_id " +
                 "JOIN LawyerPracticeAreas lpa ON l.lawyer_id = lpa.lawyer_id " +
                 "JOIN PracticeAreas pa ON lpa.area_id = pa.area_id " +
-                "WHERE pa.area_name = ?";
+                "WHERE pa.area_name = ? AND l.is_available = TRUE";
         List<Lawyer> lawyers = new ArrayList<>();
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -258,6 +258,50 @@ public class LawyerDAO {
         } catch (SQLException e) {
             LOGGER.severe("Error fetching lawyers by practice area: " + e.getMessage());
             return lawyers;
+        } finally {
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (stmt != null) {
+                    stmt.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                LOGGER.severe("Error closing resources: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Get a lawyer by their name
+     * @param name Full name of the lawyer to search for
+     * @return Lawyer object if found, null otherwise
+     */
+    public Lawyer getLawyerByName(String name) {
+        String sql = "SELECT u.*, l.* FROM Users u " +
+                "JOIN Lawyers l ON u.user_id = l.lawyer_id " +
+                "WHERE LOWER(u.full_name) LIKE LOWER(?) AND l.is_available = TRUE " +
+                "ORDER BY u.user_id LIMIT 1";
+        Connection conn = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBConnectionUtil.getConnection();
+            stmt = conn.prepareStatement(sql);
+            stmt.setString(1, "%" + name + "%");
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                return mapResultSetToLawyer(rs);
+            }
+            LOGGER.info("No lawyer found for name: " + name);
+            return null;
+        } catch (SQLException e) {
+            LOGGER.severe("Error fetching lawyer by name: " + name + ", " + e.getMessage());
+            return null;
         } finally {
             try {
                 if (rs != null) {
