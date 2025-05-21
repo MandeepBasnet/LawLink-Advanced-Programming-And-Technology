@@ -114,7 +114,6 @@ public class AdminAddLawyerServlet extends HttpServlet {
             // Handle file upload
             String profileImage = null;
             if (lawyerImagePart != null && lawyerImagePart.getSize() > 0) {
-                // Validate file type
                 String contentType = lawyerImagePart.getContentType();
                 if (!contentType.equals("image/jpeg") && !contentType.equals("image/png")) {
                     logger.warning("Invalid file type: " + contentType);
@@ -123,7 +122,6 @@ public class AdminAddLawyerServlet extends HttpServlet {
                     return;
                 }
 
-                // Generate unique filename
                 String fileName = getSubmittedFileName(lawyerImagePart);
                 if (fileName != null && !fileName.isEmpty()) {
                     String extension = fileName.substring(fileName.lastIndexOf("."));
@@ -146,10 +144,8 @@ public class AdminAddLawyerServlet extends HttpServlet {
                 }
             }
 
-            // Hash password
             String hashedPassword = PasswordUtil.hashPassword(password);
 
-            // Create Lawyer object
             Lawyer lawyer = new Lawyer();
             lawyer.setUsername(username);
             lawyer.setEmail(email);
@@ -166,14 +162,12 @@ public class AdminAddLawyerServlet extends HttpServlet {
             lawyer.setAddress(address);
             lawyer.setAboutMe(aboutMe);
             lawyer.setProfileImage(profileImage);
-            lawyer.setVerified(true); // Admin adds => directly verified
-            lawyer.setAvailable(true); // Default to available
+            lawyer.setVerified(true);
+            lawyer.setAvailable(true);
 
-            // Save to database
             boolean created = lawyerDAO.createLawyer(lawyer);
 
             if (!created && profileImage != null) {
-                // Clean up image on failure
                 String uploadPath = getServletContext().getRealPath("") + java.io.File.separator + profileImage;
                 try {
                     Files.deleteIfExists(Paths.get(uploadPath));
@@ -184,12 +178,12 @@ public class AdminAddLawyerServlet extends HttpServlet {
             }
 
             if (created) {
-                request.setAttribute("success", "Lawyer added successfully!");
+                request.getSession().setAttribute("successMessage", "Lawyer added successfully!");
+                response.sendRedirect(request.getContextPath() + "/admin/admin-lawyers");
             } else {
                 request.setAttribute("error", "Failed to add lawyer. Try again.");
+                request.getRequestDispatcher("/WEB-INF/views/admin/adminAddLawyers.jsp").forward(request, response);
             }
-
-            request.getRequestDispatcher("/WEB-INF/views/admin/adminAddLawyers.jsp").forward(request, response);
 
         } catch (Exception e) {
             logger.severe("Unexpected error while adding lawyer: " + e.getMessage());
