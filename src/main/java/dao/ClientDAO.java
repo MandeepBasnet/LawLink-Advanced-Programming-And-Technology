@@ -114,33 +114,8 @@ public class ClientDAO {
         }
     }
 
-    /**
-     * Get a client by their ID
-     * @param clientId ID of the client to retrieve
-     * @return Client object if found, null otherwise
-     */
-    public Client getClientById(int clientId) {
-        String sql = "SELECT u.*, c.* FROM Users u " +
-                "JOIN Clients c ON u.user_id = c.client_id " +
-                "WHERE c.client_id = ?";
 
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, clientId);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToClient(rs);
-                }
-            }
-
-            return null;
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting client by ID", e);
-            return null;
-        }
-    }
 
     /**
      * Get all clients from the database
@@ -166,77 +141,6 @@ public class ClientDAO {
         }
     }
 
-    /**
-     * Update a client in the database
-     * @param client Client object to update
-     * @return true if successful, false otherwise
-     */
-    public boolean updateClient(Client client) {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-
-        try {
-            conn = DBConnectionUtil.getConnection();
-            conn.setAutoCommit(false);
-
-            // First, update the user record
-            boolean userUpdated = userDAO.updateUser(client);
-
-            if (!userUpdated) {
-                conn.rollback();
-                return false;
-            }
-
-            // Then, update the client record
-            String sql = "UPDATE Clients SET gender = ? WHERE client_id = ?";
-
-            stmt = conn.prepareStatement(sql);
-            stmt.setString(1, client.getGender());
-            stmt.setInt(2, client.getClientId());
-
-            int rowsAffected = stmt.executeUpdate();
-
-            if (rowsAffected > 0) {
-                conn.commit();
-                return true;
-            } else {
-                conn.rollback();
-                return false;
-            }
-        } catch (SQLException e) {
-            try {
-                if (conn != null) {
-                    conn.rollback();
-                }
-            } catch (SQLException ex) {
-                LOGGER.log(Level.SEVERE, "Failed to rollback transaction", ex);
-            }
-            LOGGER.log(Level.SEVERE, "Failed to update client", e);
-            return false;
-        } finally {
-            try {
-                if (stmt != null) {
-                    stmt.close();
-                }
-                if (conn != null) {
-                    conn.setAutoCommit(true);
-                    DBConnectionUtil.closeConnection(conn);
-                }
-            } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Failed to close database resources", e);
-            }
-        }
-    }
-
-    /**
-     * Delete a client from the database
-     * @param clientId ID of the client to delete
-     * @return true if successful, false otherwise
-     */
-    public boolean deleteClient(int clientId) {
-        // This will cascade to delete the client record due to ON DELETE CASCADE
-        return userDAO.deleteUser(clientId);
-    }
 
     /**
      * Map a ResultSet to a Client object

@@ -26,8 +26,7 @@ public class EmailUtil {
     private static final String EMAIL_PASSWORD = "clut egwy wvwb jdtg"; // Replace with app password
     private static final String EMAIL_FROM = "np05cp4a230108@iic.edu.np";
     
-    /**
-     * Sends an email using SMTP
+    /**     * Sends an email using SMTP
      * 
      * @param toEmail Recipient email address
      * @param subject Email subject
@@ -68,42 +67,4 @@ public class EmailUtil {
         }
     }
     
-    /**
-     * Send OTP email for password reset
-     * 
-     * @param email Recipient email
-     * @param otp One-time password
-     * @param expiryMinutes Expiry time in minutes
-     * @return true if sent successfully, false otherwise
-     */
-    public static boolean sendPasswordResetOTP(String email, String otp, int expiryMinutes) {
-        String subject = "LawLink - Password Reset OTP";
-    
-        String body = """
-            <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
-                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; border-top: 4px solid #2563eb;">
-                    <h2 style="color: #2563eb; margin-top: 0;">Password Reset Request</h2>
-                    <p>We received a request to reset your password for your <strong>LawLink</strong> account. Please use the following One-Time Password (OTP) to complete your password reset:</p>
-                    
-                    <div style="background-color: #e2e8f0; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
-                        <h3 style="font-size: 24px; margin: 0; letter-spacing: 5px; color: #1e293b;">%s</h3>
-                    </div>
-                    
-                    <p>This OTP will expire in <strong>%d minutes</strong>.</p>
-                    
-                    <p style="margin-top: 30px; font-size: 13px; color: #64748b;">
-                        If you did not request a password reset, please ignore this email or contact our support team.
-                    </p>
-                    
-                    <p style="margin-top: 30px; font-size: 13px; color: #64748b;">
-                        &copy; LawLink. All rights reserved.
-                    </p>
-                </div>
-            </body>
-            </html>
-            """.formatted(otp, expiryMinutes);
-    
-        return sendEmail(email, subject, body);
-    }
-} 
+}

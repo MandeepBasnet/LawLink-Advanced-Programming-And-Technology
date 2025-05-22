@@ -138,27 +138,6 @@ public class UserDAO {
         }
     }
 
-    /**
-     * Get a user by their username
-     * @param username Username of the user to retrieve
-     * @return User object if found, null otherwise
-     */
-    public User getUserByUsername(String username) {
-        String sql = "SELECT u.*, c.date_of_birth FROM Users u LEFT JOIN Clients c ON u.user_id = c.client_id WHERE u.username = ?";
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, username);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToUser(rs);
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error getting user by username", e);
-        }
-        return null;
-    }
 
     /**
      * Get a user by their email
@@ -280,52 +259,6 @@ public class UserDAO {
     }
 
     /**
-     * Update a user's last login time
-     * @param userId ID of the user to update
-     * @return true if successful, false otherwise
-     */
-    public boolean updateLastLogin(int userId) {
-        String sql = "UPDATE Users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?";
-
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, userId);
-
-            int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error updating last login", e);
-            return false;
-        }
-    }
-
-    /**
-     * Update a user's session token
-     * @param userId ID of the user to update
-     * @param sessionToken Session token
-     * @param sessionExpiry Session expiry timestamp
-     * @return true if successful, false otherwise
-     */
-    public boolean updateSessionToken(int userId, String sessionToken, Timestamp sessionExpiry) {
-        String sql = "UPDATE Users SET session_token = ?, session_expiry = ? WHERE user_id = ?";
-
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, sessionToken);
-            stmt.setTimestamp(2, sessionExpiry);
-            stmt.setInt(3, userId);
-
-            int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error updating session token", e);
-            return false;
-        }
-    }
-
-    /**
      * Delete a user from the database
      * @param userId ID of the user to delete
      * @return true if successful, false otherwise
@@ -396,35 +329,6 @@ public class UserDAO {
         }
     }
 
-    public List<User> getAllClients() throws SQLException {
-        List<User> clients = new ArrayList<>();
-        String sql = "SELECT u.*, c.date_of_birth FROM Users u LEFT JOIN Clients c ON u.user_id = c.client_id WHERE u.role = 'CLIENT'";
-
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                User client = new User();
-                client.setUserId(rs.getInt("user_id"));
-                client.setUsername(rs.getString("username"));
-                client.setEmail(rs.getString("email"));
-                client.setFullName(rs.getString("full_name"));
-                client.setRole(rs.getString("role"));
-                client.setPhone(rs.getString("phone"));
-                client.setAddress(rs.getString("address"));
-                client.setProfileImage(rs.getString("profile_image"));
-                client.setGender(rs.getString("gender"));
-                client.setDateOfBirth(rs.getString("date_of_birth"));
-                clients.add(client);
-            }
-        } catch (SQLException e) {
-            LOGGER.severe("Error retrieving all clients: " + e.getMessage());
-            throw e;
-        }
-
-        return clients;
-    }
 
     public void close() {
         try {
@@ -436,24 +340,6 @@ public class UserDAO {
         }
     }
 
-    // Helper method to check if a column exists in a table
-    private boolean checkIfColumnExists(Connection conn, String tableName, String columnName) throws SQLException {
-        ResultSet rs = null;
-        try {
-            // Get database metadata
-            DatabaseMetaData meta = conn.getMetaData();
-            rs = meta.getColumns(null, null, tableName, columnName);
-            return rs.next(); // If rs.next() returns true, the column exists
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) {
-                    LOGGER.warning("Error closing result set: " + e.getMessage());
-                }
-            }
-        }
-    }
 
     private String getSubmittedFileName(Part part) {
         for (String content : part.getHeader("content-disposition").split(";")) {

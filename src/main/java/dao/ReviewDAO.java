@@ -51,38 +51,6 @@ public class ReviewDAO {
         }
     }
 
-    /**
-     * Get a review by its ID
-     * @param reviewId ID of the review to retrieve
-     * @return Review object if found, null otherwise
-     */
-    public Review getReviewById(int reviewId) {
-        String sql = "SELECT r.*, u1.full_name AS client_name, u2.full_name AS lawyer_name " +
-                "FROM Reviews r " +
-                "JOIN Appointments a ON r.appointment_id = a.appointment_id " +
-                "JOIN Clients c ON a.client_id = c.client_id " +
-                "JOIN Users u1 ON c.client_id = u1.user_id " +
-                "JOIN Lawyers l ON a.lawyer_id = l.lawyer_id " +
-                "JOIN Users u2 ON l.lawyer_id = u2.user_id " +
-                "WHERE r.review_id = ?";
-
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, reviewId);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapResultSetToReview(rs);
-                }
-            }
-
-            return null;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     /**
      * Get a review by appointment ID
@@ -153,41 +121,6 @@ public class ReviewDAO {
         }
     }
 
-    /**
-     * Get all reviews by a client
-     * @param clientId ID of the client
-     * @return List of Review objects
-     */
-    public List<Review> getReviewsByClient(int clientId) {
-        String sql = "SELECT r.*, u1.full_name AS client_name, u2.full_name AS lawyer_name " +
-                "FROM Reviews r " +
-                "JOIN Appointments a ON r.appointment_id = a.appointment_id " +
-                "JOIN Clients c ON a.client_id = c.client_id " +
-                "JOIN Users u1 ON c.client_id = u1.user_id " +
-                "JOIN Lawyers l ON a.lawyer_id = l.lawyer_id " +
-                "JOIN Users u2 ON l.lawyer_id = u2.user_id " +
-                "WHERE a.client_id = ? " +
-                "ORDER BY r.review_date DESC";
-
-        List<Review> reviews = new ArrayList<>();
-
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, clientId);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    reviews.add(mapResultSetToReview(rs));
-                }
-            }
-
-            return reviews;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return reviews;
-        }
-    }
 
     /**
      * Get recent reviews
@@ -225,120 +158,7 @@ public class ReviewDAO {
         }
     }
 
-    /**
-     * Update a review in the database
-     * @param review Review object to update
-     * @return true if successful, false otherwise
-     */
-    public boolean updateReview(Review review) {
-        String sql = "UPDATE Reviews SET rating = ?, comment = ? WHERE review_id = ?";
 
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, review.getRating());
-            stmt.setString(2, review.getComment());
-            stmt.setInt(3, review.getReviewId());
-
-            int rowsAffected = stmt.executeUpdate();
-
-            if (rowsAffected > 0) {
-                // Update lawyer's rating
-                int lawyerId = getLawyerIdFromReview(conn, review.getReviewId());
-                updateLawyerRating(conn, lawyerId);
-
-                return true;
-            }
-
-            return false;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * Delete a review from the database
-     * @param reviewId ID of the review to delete
-     * @return true if successful, false otherwise
-     */
-    public boolean deleteReview(int reviewId) {
-        Connection conn = null;
-        PreparedStatement stmt = null;
-
-        try {
-            conn = DBConnectionUtil.getConnection();
-            conn.setAutoCommit(false);
-
-            // Get the lawyer ID before deleting the review
-            int lawyerId = getLawyerIdFromReview(conn, reviewId);
-
-            // Delete the review
-            String sql = "DELETE FROM Reviews WHERE review_id = ?";
-            stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, reviewId);
-
-            int rowsAffected = stmt.executeUpdate();
-
-            if (rowsAffected > 0) {
-                // Update lawyer's rating
-                updateLawyerRating(conn, lawyerId);
-
-                conn.commit();
-                return true;
-            } else {
-                conn.rollback();
-                return false;
-            }
-        } catch (SQLException e) {
-            try {
-                if (conn != null) {
-                    conn.rollback();
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-            }
-            e.printStackTrace();
-            return false;
-        } finally {
-            try {
-                if (stmt != null) {
-                    stmt.close();
-                }
-                if (conn != null) {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Get the lawyer ID from a review
-     * @param conn Database connection
-     * @param reviewId ID of the review
-     * @return Lawyer ID
-     * @throws SQLException if a database access error occurs
-     */
-    private int getLawyerIdFromReview(Connection conn, int reviewId) throws SQLException {
-        String sql = "SELECT a.lawyer_id FROM Reviews r " +
-                "JOIN Appointments a ON r.appointment_id = a.appointment_id " +
-                "WHERE r.review_id = ?";
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, reviewId);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("lawyer_id");
-                }
-            }
-        }
-
-        return 0;
-    }
 
     /**
      * Get the lawyer ID from an appointment

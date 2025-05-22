@@ -450,41 +450,6 @@ public class LawyerDAO {
         }
     }
 
-    /**
-     * Update a lawyer's availability
-     * @param lawyerId ID of the lawyer to update
-     * @param isAvailable New availability status
-     * @return true if successful, false otherwise
-     */
-    public boolean updateLawyerAvailability(int lawyerId, boolean isAvailable) {
-        String sql = "UPDATE Lawyers SET is_available = ? WHERE lawyer_id = ?";
-        Connection conn = null;
-        PreparedStatement stmt = null;
-
-        try {
-            conn = DBConnectionUtil.getConnection();
-            stmt = conn.prepareStatement(sql);
-            stmt.setBoolean(1, isAvailable);
-            stmt.setInt(2, lawyerId);
-            int rowsAffected = stmt.executeUpdate();
-            LOGGER.info("Updated availability for lawyerId: " + lawyerId + ", rowsAffected: " + rowsAffected);
-            return rowsAffected > 0;
-        } catch (SQLException e) {
-            LOGGER.severe("Error updating lawyer availability: " + e.getMessage());
-            return false;
-        } finally {
-            try {
-                if (stmt != null) {
-                    stmt.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                LOGGER.severe("Error closing resources: " + e.getMessage());
-            }
-        }
-    }
 
     /**
      * Delete a lawyer from the database
@@ -497,51 +462,6 @@ public class LawyerDAO {
         return success;
     }
 
-    /**
-     * Search for lawyers by name or specialization
-     * @param query Search query
-     * @return List of matching Lawyer objects
-     */
-    public List<Lawyer> searchLawyers(String query) {
-        String sql = "SELECT u.*, l.* FROM Users u " +
-                "JOIN Lawyers l ON u.user_id = l.lawyer_id " +
-                "WHERE u.full_name LIKE ? OR l.specialization LIKE ?";
-        List<Lawyer> lawyers = new ArrayList<>();
-        Connection conn = null;
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        try {
-            conn = DBConnectionUtil.getConnection();
-            stmt = conn.prepareStatement(sql);
-            String searchPattern = "%" + query + "%";
-            stmt.setString(1, searchPattern);
-            stmt.setString(2, searchPattern);
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                lawyers.add(mapResultSetToLawyer(rs));
-            }
-            LOGGER.info("Found " + lawyers.size() + " lawyers for search query: " + query);
-            return lawyers;
-        } catch (SQLException e) {
-            LOGGER.severe("Error searching lawyers: " + e.getMessage());
-            return lawyers;
-        } finally {
-            try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (stmt != null) {
-                    stmt.close();
-                }
-                if (conn != null) {
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                LOGGER.severe("Error closing resources: " + e.getMessage());
-            }
-        }
-    }
 
     /**
      * Map a ResultSet to a Lawyer object

@@ -134,44 +134,7 @@ public class AppointmentDAO {
         }
     }
 
-    /**
-     * Get upcoming appointments for a lawyer
-     * @param lawyerId ID of the lawyer
-     * @param limit Maximum number of appointments to return
-     * @return List of Appointment objects
-     */
-    public List<Appointment> getUpcomingAppointmentsByLawyer(int lawyerId, int limit) {
-        String sql = "SELECT a.*, u1.full_name AS lawyer_name, u2.full_name AS client_name, l.consultation_fee " +
-                "FROM Appointments a " +
-                "JOIN Lawyers l ON a.lawyer_id = l.lawyer_id " +
-                "JOIN Users u1 ON l.lawyer_id = u1.user_id " +
-                "JOIN Clients c ON a.client_id = c.client_id " +
-                "JOIN Users u2 ON c.client_id = u2.user_id " +
-                "WHERE a.lawyer_id = ? AND a.appointment_date >= CURDATE() " +
-                "AND (a.status = 'PENDING' OR a.status = 'CONFIRMED') " +
-                "ORDER BY a.appointment_date ASC, a.appointment_time ASC " +
-                "LIMIT ?";
 
-        List<Appointment> appointments = new ArrayList<>();
-
-        try (Connection conn = DBConnectionUtil.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, lawyerId);
-            stmt.setInt(2, limit);
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    appointments.add(mapResultSetToAppointment(rs));
-                }
-            }
-
-            return appointments;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return appointments;
-        }
-    }
 
     /**
      * Get all appointments for a client
